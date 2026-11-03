@@ -64,17 +64,21 @@ export function releasePathProblems(names) {
   return problems;
 }
 
+/** Whether a match pattern can cover a facebook.com page. */
+function reachesFacebook(pattern) {
+  return /facebook\.com/i.test(pattern) || pattern === "<all_urls>" || /^(\*|https?):\/\/\*\//.test(pattern);
+}
+
 /**
- * Web pages can request any web-accessible file. With the extension id pinned that URL would
- * be identical on every machine and prove the extension is installed, so every entry has to
- * use a per-profile dynamic URL. The build sets this; this makes sure it did.
+ * Any web-accessible file can be requested by a page it matches, and with the extension id
+ * pinned its URL is the same on every machine, so one on facebook.com proves the extension
+ * is installed. The content script is built as one classic script so none is needed; this
+ * makes sure the build did not bring one back.
  */
-function assertDynamicUrls(manifest) {
-  const loose = (manifest.web_accessible_resources ?? []).filter((entry) => entry.use_dynamic_url !== true);
-  if (loose.length > 0) {
-    throw new Error(
-      `Every web_accessible_resources entry needs use_dynamic_url: true; not set on: ${JSON.stringify(loose)}`,
-    );
+function assertNoFacebookResources(manifest) {
+  const exposed = (manifest.web_accessible_resources ?? []).filter((entry) => (entry.matches ?? []).some(reachesFacebook));
+  if (exposed.length > 0) {
+    throw new Error(`web_accessible_resources must not reach facebook.com; found: ${JSON.stringify(exposed)}`);
   }
 }
 
@@ -101,7 +105,7 @@ export async function packRelease({ dist = join(ROOT, "dist"), out = join(ROOT, 
 
   const manifest = JSON.parse(await readFile(join(dist, "manifest.json"), "utf8"));
   const version = manifest.version;
-  assertDynamicUrls(manifest);
+  assertNoFacebookResources(manifest);
   const files = await collect(dist);
 
   if (files.some((file) => file.name === FILE_LIST)) {

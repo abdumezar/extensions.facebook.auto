@@ -213,22 +213,31 @@ describe("packRelease", () => {
   );
 
   it.each([
-    ["false", { use_dynamic_url: false }],
-    ["missing", {}],
-  ])("refuses a web-accessible entry whose use_dynamic_url is %s", async (_label, extra) => {
-    put(
-      "manifest.json",
-      JSON.stringify({ version: "1.2.3", web_accessible_resources: [{ matches: ["*://*/*"], resources: ["a.js"], ...extra }] }),
-    );
-    await expect(packRelease({ dist, out })).rejects.toThrow(/use_dynamic_url/);
-  });
-
-  it("accepts web-accessible entries that are all dynamic", async () => {
+    ["a facebook.com pattern", ["*://*.facebook.com/*"]],
+    ["a pattern that includes it among others", ["https://example.org/*", "*://upload.facebook.com/*"]],
+    ["every site", ["<all_urls>"]],
+    ["every site, spelled as a pattern", ["*://*/*"]],
+  ])("refuses a web-accessible entry that reaches facebook.com (%s)", async (_label, matches) => {
     put(
       "manifest.json",
       JSON.stringify({
         version: "1.2.3",
-        web_accessible_resources: [{ matches: ["*://*/*"], resources: ["a.js"], use_dynamic_url: true }],
+        web_accessible_resources: [{ matches, resources: ["a.js"], use_dynamic_url: true }],
+      }),
+    );
+    await expect(packRelease({ dist, out })).rejects.toThrow(/facebook\.com/);
+  });
+
+  it("accepts a manifest with no web-accessible resources", async () => {
+    await expect(packRelease({ dist, out })).resolves.toBeTruthy();
+  });
+
+  it("accepts a web-accessible entry that no facebook.com page can request", async () => {
+    put(
+      "manifest.json",
+      JSON.stringify({
+        version: "1.2.3",
+        web_accessible_resources: [{ matches: ["https://example.org/*"], resources: ["a.js"] }],
       }),
     );
     await expect(packRelease({ dist, out })).resolves.toBeTruthy();

@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { unpackRelease } from "../src/update/unpack.js";
 import { verifyReleaseSignature } from "../src/update/verify.js";
-import manifestConfig from "../manifest.config.js";
+import manifestConfig, { buildManifest } from "../manifest.config.js";
 import pkg from "../package.json";
 // @ts-expect-error - plain .mjs build scripts, no declarations
 import { packRelease } from "./pack.mjs";
@@ -101,9 +101,12 @@ describe("the extension identity", () => {
     ]);
   });
 
-  it("does not hand the dashboard page to facebook.com", () => {
-    const exposed = (manifest.web_accessible_resources ?? []).flatMap((entry) => entry.resources);
-    expect(exposed.some((resource) => resource.includes("dashboard"))).toBe(false);
-    for (const entry of manifest.web_accessible_resources ?? []) expect(entry.use_dynamic_url).toBe(true);
+  it("declares no web-accessible resources of its own", () => {
+    expect(manifest.web_accessible_resources).toBeUndefined();
+    expect((buildManifest as unknown as typeof manifest).web_accessible_resources).toBeUndefined();
+  });
+
+  it("leaves the content script to the build, which makes it a file of its own", () => {
+    expect(buildManifest).not.toHaveProperty("content_scripts");
   });
 });

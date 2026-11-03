@@ -15,8 +15,8 @@ import pkg from "./package.json";
  * `declarativeNetRequest` rules are added dynamically at runtime (see dnrManager) using
  * `chrome.runtime.id`, never a hardcoded extension id.
  */
-export default defineManifest({
-  manifest_version: 3,
+const common = {
+  manifest_version: 3 as const,
   name: "Nashir — Facebook Group Auto Poster",
   short_name: "Nashir",
   description:
@@ -42,15 +42,6 @@ export default defineManifest({
     type: "module",
   },
 
-  content_scripts: [
-    {
-      matches: ["*://*.facebook.com/*"],
-      js: ["src/content/index.ts"],
-      run_at: "document_idle",
-      all_frames: false,
-    },
-  ],
-
   permissions: [
     "tabs",
     "storage",
@@ -75,6 +66,23 @@ export default defineManifest({
   ],
 
   // Nothing on facebook.com needs a page of this extension: the dashboard is opened by the
-  // service worker in its own tab. So no explicit entry is declared here; the only
-  // resources a web page can request are the content-script chunks the build adds itself.
+  // service worker in its own tab, and the content script is built as one classic script
+  // (see scripts/lib/classicContentScript.ts), so there is no chunk to expose either. No
+  // `web_accessible_resources` entry is declared, and the release packer refuses one for
+  // facebook.com.
+};
+
+/** The content script's entry file, and where it runs. The built file's name is not here. */
+export const CONTENT_SCRIPT_ENTRY = "src/content/index.ts";
+export const contentScriptMatches = [
+  { matches: ["*://*.facebook.com/*"], run_at: "document_idle" as const, all_frames: false },
+];
+
+/** The dev server's manifest: the content script as an entry, so the dev plugin hot-reloads it. */
+export default defineManifest({
+  ...common,
+  content_scripts: contentScriptMatches.map((script) => ({ ...script, js: [CONTENT_SCRIPT_ENTRY] })),
 });
+
+/** The build's manifest: no content script, because the build adds the one it makes itself. */
+export const buildManifest = defineManifest(common);

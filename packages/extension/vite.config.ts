@@ -2,20 +2,30 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { crx } from "@crxjs/vite-plugin";
 import { resolve } from "node:path";
-import manifest from "./manifest.config.js";
-import { dynamicResourceUrls } from "./scripts/lib/dynamicWar.js";
+import devManifest, { buildManifest, CONTENT_SCRIPT_ENTRY, contentScriptMatches } from "./manifest.config.js";
+import { classicContentScript } from "./scripts/lib/classicContentScript.js";
 
 const rootDir = import.meta.dirname;
 
-export default defineConfig(({ mode }) => ({
-  resolve: {
-    alias: {
-      "@nashir/shared": resolve(rootDir, "../shared/src/index.ts"),
-      "@": resolve(rootDir, "src"),
-    },
-  },
-  // After crx(): it writes every web-accessible entry with a fixed URL, this turns that off.
-  plugins: [react(), crx({ manifest }), dynamicResourceUrls()],
+const alias = {
+  "@nashir/shared": resolve(rootDir, "../shared/src/index.ts"),
+  "@": resolve(rootDir, "src"),
+};
+
+export default defineConfig(({ mode, command }) => ({
+  resolve: { alias },
+  plugins: [
+    react(),
+    // A release builds the content script on its own, as one classic script (see the plugin
+    // for why); the dev server keeps the manifest as written so the script hot-reloads.
+    crx({ manifest: command === "build" ? buildManifest : devManifest }),
+    classicContentScript({
+      root: rootDir,
+      entry: CONTENT_SCRIPT_ENTRY,
+      scripts: contentScriptMatches,
+      alias,
+    }),
+  ],
   build: {
     target: "es2022",
     // Maps are for debugging; a release should not ship them (they double its size and
