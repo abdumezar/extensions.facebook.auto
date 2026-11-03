@@ -128,7 +128,7 @@ Nashir is an independent project. It is not affiliated with, endorsed by or conn
 
 ## Build from source
 
-You need Node.js 20 or newer (CI uses 22) and pnpm 10.
+You need Node.js 22 or newer and pnpm 10.
 
 ```bash
 pnpm install
