@@ -69,6 +69,27 @@ describe("comment", () => {
     expect(calls[1]?.friendly).toBe(RECIPE.createComment?.friendlyName);
   });
 
+  it("rejects a non-Facebook postUrl without fetching", async () => {
+    const { svc, calls } = harness(OK);
+    for (const url of [
+      "https://evil.example/p/1",
+      "https://facebook.com.evil.example/p/1",
+      "https://facebook.com@evil.example/p/1",
+      "https://evilfacebook.com/p/1",
+      "ftp://www.facebook.com/p/1",
+      "not a url",
+    ]) {
+      expect(await svc.comment(url, "hi", TOKENS, RECIPE)).toEqual({
+        status: "failed",
+        error: "not_a_post_url",
+      });
+    }
+    expect(calls).toEqual([]);
+    // A real Facebook host (any subdomain, http or https) gets past the host check.
+    const ok = await svc.comment("http://m.facebook.com/groups/1/posts/2", "hi", TOKENS, RECIPE);
+    expect(ok.error).not.toBe("not_a_post_url");
+  });
+
   it("refuses an empty body without touching Facebook", async () => {
     const { svc, calls } = harness(OK);
     expect(await svc.comment(POST_URL, "   ", TOKENS, RECIPE)).toMatchObject({

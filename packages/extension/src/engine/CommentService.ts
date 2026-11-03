@@ -1,4 +1,5 @@
 import type { FbRecipe, SessionTokens } from "@nashir/shared";
+import { isFacebookUrl } from "./AudienceService.js";
 import { encodeFeedbackTarget, findFeedbackId } from "./audienceParse.js";
 import { fbErrorText, fbErrorsOf, parseFbJson } from "./fbResponse.js";
 import type { HttpPort, LoggerPort } from "./ports/index.js";
@@ -58,6 +59,9 @@ export class CommentService {
     const q = recipe.createComment;
     if (!q?.docId) return { status: "unsupported", error: "recipe_missing_create_comment" };
     if (!body.trim()) return { status: "failed", error: "empty_body" };
+    // Keeps us from issuing a credentialed request to a caller-chosen host. Checks the
+    // host only; the feedback-id lookup below decides whether it is really a post.
+    if (!isFacebookUrl(postUrl)) return { status: "failed", error: "not_a_post_url" };
 
     let feedbackId: string | undefined;
     try {
