@@ -2,9 +2,13 @@ import type { FbProfile } from "@nashir/shared";
 import { describe, expect, it, vi } from "vitest";
 import { SESSION_PROFILE_KEY, SessionProbe } from "./SessionProbe.js";
 import type { TokenScraper } from "./TokenScraper.js";
+import { VERIFIED_KEY } from "./verification.js";
 import type { CookiePort, CookieRecord, LoggerPort, StoragePort, TabPort } from "./ports/index.js";
 
 const USER = "100000000000001";
+const T0 = 1_800_000_000_000;
+const HOUR = 60 * 60_000;
+const fakeHash = async (v: string) => `h(${v})`;
 const PROFILE: FbProfile = {
   fbUserId: USER,
   name: "ليلى حداد",
@@ -20,9 +24,15 @@ function harness(opts: {
   tokens?: boolean;
   cached?: FbProfile;
   scrapeThrows?: boolean;
+  /** The xs cookie the browser holds; null for none. */
+  xs?: string | null;
+  /** A stored live-check entry, by user id. */
+  verified?: Record<string, { at: number; xs: string }>;
+  now?: number;
 }) {
   const map = new Map<string, unknown>();
   if (opts.cached) map.set(SESSION_PROFILE_KEY, opts.cached);
+  if (opts.verified) map.set(VERIFIED_KEY, opts.verified);
 
   const storage: StoragePort = {
     async get<T>(k: string) {
@@ -39,6 +49,10 @@ function harness(opts: {
   const cookies: CookiePort = {
     async get(_url, name) {
       const value = opts.loggedInAs === undefined ? USER : opts.loggedInAs;
+      if (name === "xs") {
+        const xs = opts.xs === undefined ? "xs-1" : opts.xs;
+        return xs ? ({ name, value: xs } as CookieRecord) : null;
+      }
       return name === "c_user" && value ? ({ name, value } as CookieRecord) : null;
     },
     async getAll() {
@@ -77,7 +91,7 @@ function harness(opts: {
 
   const logger: LoggerPort = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
   return {
-    probe: new SessionProbe(cookies, tab, scraper, logger, storage),
+    probe: new SessionProbe(cookies, tab, scraper, logger, storage, { now: () => opts.now ?? T0 }, fakeHash),
     storage,
     map,
     openedTabs: () => opened,
@@ -185,6 +199,69 @@ describe("refreshProfileIfPossible", () => {
     const { probe, map } = harness({ openTab: false, cached: PROFILE });
     expect(await probe.refreshProfileIfPossible()).toBeNull();
     expect(map.get(SESSION_PROFILE_KEY)).toEqual(PROFILE);
+  });
+});
+
+describe("verifiedAt — a recent live check outlives the tab that made it", () => {
+  const fresh = { [USER]: { at: T0 - 5 * 60_000, xs: "h(xs-1)" } };
+
+  it("is reported with no Facebook tab open", async () => {
+    const { probe } = harness({ openTab: false, verified: fresh });
+    const s = await probe.status();
+    expect(s.tokensReady).toBe(false);
+    expect(s.verifiedAt).toBe(T0 - 5 * 60_000);
+  });
+
+  it("is reported when a tab is open and the token scrape threw", async () => {
+    const { probe } = harness({ openTab: true, scrapeThrows: true, verified: fresh });
+    const s = await probe.status();
+    expect(s.tokensReady).toBe(false);
+    expect(s.verifiedAt).toBe(T0 - 5 * 60_000);
+  });
+
+  it("is reported alongside live tokens", async () => {
+    const { probe } = harness({ openTab: true, verified: fresh });
+    expect((await probe.status()).verifiedAt).toBe(T0 - 5 * 60_000);
+  });
+
+  it("is absent when the entry is older than twelve hours", async () => {
+    const { probe } = harness({
+      openTab: false,
+      verified: { [USER]: { at: T0 - 12 * HOUR, xs: "h(xs-1)" } },
+    });
+    expect((await probe.status()).verifiedAt).toBeUndefined();
+  });
+
+  it("is absent when xs changed since the check", async () => {
+    const { probe } = harness({ openTab: false, verified: fresh, xs: "xs-new" });
+    expect((await probe.status()).verifiedAt).toBeUndefined();
+  });
+
+  it("is absent when there is no xs cookie", async () => {
+    const { probe } = harness({ openTab: false, verified: fresh, xs: null });
+    expect((await probe.status()).verifiedAt).toBeUndefined();
+  });
+
+  it("is absent when the entry belongs to a different user", async () => {
+    const { probe } = harness({
+      openTab: false,
+      verified: { "999999999": { at: T0 - 60_000, xs: "h(xs-1)" } },
+    });
+    expect((await probe.status()).verifiedAt).toBeUndefined();
+  });
+
+  it("is absent when logged out, and the stored entry is left alone", async () => {
+    // withAccount() empties the cookie jar for a moment during a swap; forgetting the
+    // entry on that glimpse would lose a perfectly good check.
+    const { probe, map } = harness({ loggedInAs: null, verified: fresh });
+    const s = await probe.status();
+    expect(s.verifiedAt).toBeUndefined();
+    expect(map.get(VERIFIED_KEY)).toEqual(fresh);
+  });
+
+  it("is absent when nothing was ever verified", async () => {
+    const { probe } = harness({ openTab: false });
+    expect((await probe.status()).verifiedAt).toBeUndefined();
   });
 });
 

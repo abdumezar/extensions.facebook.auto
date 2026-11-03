@@ -77,7 +77,15 @@ export class Container {
     this.logger,
     () => this.accounts.activeAccountId() ?? undefined,
   );
-  readonly scraper = new TokenScraper(this.tab, this.logger, this.governor);
+  readonly scraper = new TokenScraper(
+    this.tab,
+    this.logger,
+    this.governor,
+    // Lets a successful scrape be remembered, so "verified" survives closing Facebook.
+    this.storage,
+    this.cookies,
+    this.clock,
+  );
   readonly session = new SessionProbe(
     this.cookies,
     this.tab,
@@ -86,6 +94,7 @@ export class Container {
     // Gives the probe a memory, so the connection card names the account on a cold
     // open instead of showing a numeric id until the user opens Facebook.
     this.storage,
+    this.clock,
   );
   readonly groups = new GroupService(this.storage, this.http, this.logger);
   readonly groupSync = new GroupSyncService(

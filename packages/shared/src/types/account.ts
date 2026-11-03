@@ -79,6 +79,12 @@ export interface SessionStatus {
    * as live would mean the UI keeps naming an account the user has since logged out of.
    */
   profileFresh?: boolean;
+  /**
+   * When this exact login last passed a live check against a Facebook page, if that
+   * was under twelve hours ago. Lets the dashboard say "verified 4 min ago" after the
+   * page that proved it has been closed; absent when logged out or never checked.
+   */
+  verifiedAt?: number;
   /** Why `tokensReady` is false, when we know. */
   error?: string;
 }

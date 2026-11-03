@@ -1,6 +1,7 @@
 import type { FbProfile, SessionStatus } from "@nashir/shared";
-import type { CookiePort, LoggerPort, StoragePort, TabPort } from "./ports/index.js";
+import type { ClockPort, CookiePort, LoggerPort, StoragePort, TabPort } from "./ports/index.js";
 import type { TokenScraper } from "./TokenScraper.js";
+import { readVerifiedAt, sha256Hex, type HashFn } from "./verification.js";
 
 const FB_URL = "https://www.facebook.com";
 
@@ -28,6 +29,8 @@ export class SessionProbe {
      * simply has no memory and behaves exactly as it did before.
      */
     private readonly storage?: StoragePort,
+    private readonly clock?: Pick<ClockPort, "now">,
+    private readonly hash: HashFn = sha256Hex,
   ) {}
 
   /**
@@ -44,6 +47,10 @@ export class SessionProbe {
     if (!loggedIn) {
       return { loggedIn: false, tokensReady: false, hasOpenTab };
     }
+    // A live check made recently, even if the page that made it is gone. Attached to
+    // every logged-in answer so the card can tell "checked 4 min ago" from "never".
+    const verifiedAt = await this.verifiedAt(cUser!.value);
+
     if (!hasOpenTab && !openTabIfNeeded) {
       // Logged in as far as the cookie jar knows, but unverified against a live page.
       //
@@ -57,6 +64,7 @@ export class SessionProbe {
         hasOpenTab,
         profile: (await this.remembered(cUser!.value)) ?? { fbUserId: cUser!.value },
         profileFresh: false,
+        verifiedAt,
       };
     }
 
@@ -73,6 +81,7 @@ export class SessionProbe {
         hasOpenTab,
         profile,
         profileFresh: Boolean(live),
+        verifiedAt,
       };
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
@@ -83,8 +92,31 @@ export class SessionProbe {
         hasOpenTab,
         profile: (await this.remembered(cUser!.value)) ?? { fbUserId: cUser!.value },
         profileFresh: false,
+        verifiedAt,
         error,
       };
+    }
+  }
+
+  /**
+   * When this session last passed a live check, if that is recent and still the same
+   * login. Any failure to find out reads as "never": the card then just says what it
+   * said before.
+   */
+  private async verifiedAt(fbUserId: string): Promise<number | undefined> {
+    if (!this.storage) return undefined;
+    try {
+      const xs = await this.cookies.get(FB_URL, "xs");
+      if (!xs?.value) return undefined;
+      return await readVerifiedAt(
+        this.storage,
+        this.hash,
+        fbUserId,
+        xs.value,
+        this.clock?.now() ?? Date.now(),
+      );
+    } catch {
+      return undefined;
     }
   }
 

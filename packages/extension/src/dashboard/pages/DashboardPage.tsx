@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CURRENT_SESSION, type RunStatus } from "@nashir/shared";
 import { useStore, resolveGroupIds, type ViewId } from "../store.js";
-import { loadSession, reloadGroups } from "../lib/data.js";
+import { fetchSession, loadSession, reloadGroups } from "../lib/data.js";
+import { SESSION_PROFILE_KEY } from "../../engine/SessionProbe.js";
+import { VERIFIED_KEY } from "../../engine/verification.js";
 import { Avatar } from "../components/Avatar.js";
 import { Button, Card, Icon, StatusChip, cn, type IconName, type StatusTone } from "../ui/index.js";
 
@@ -87,13 +89,50 @@ function ConnectionCard() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [, setTick] = useState(0);
+
   const connected = Boolean(session?.loggedIn);
-  const tone: StatusTone = connected ? (session?.tokensReady ? "success" : "warning") : "error";
+  // A live check made in the last few hours counts even if the page that made it is
+  // closed — the service worker only reports `verifiedAt` while the same login holds.
+  const verifiedAt = connected ? session?.verifiedAt : undefined;
+  const verified = connected && (Boolean(session?.tokensReady) || verifiedAt !== undefined);
+  const tone: StatusTone = connected ? (verified ? "success" : "warning") : "error";
   const label = !connected
     ? t("home.disconnected")
-    : session?.tokensReady
+    : verified
       ? t("home.connected")
       : t("home.connectedUnverified");
+
+  // "4 min ago" goes stale on its own, so the page re-renders once a minute.
+  useEffect(() => {
+    if (verifiedAt === undefined) return;
+    const id = setInterval(() => setTick((n) => n + 1), 60_000);
+    return () => clearInterval(id);
+  }, [verifiedAt]);
+
+  // A verification or a remembered profile can land while this page is open (a
+  // Facebook tab was opened, a scrape ran). Follow the keys rather than reading once,
+  // unless the session already has live tokens — then there is nothing to learn.
+  useEffect(() => {
+    let cancelled = false;
+    let latest = 0;
+    const listener = (changes: Record<string, chrome.storage.StorageChange>) => {
+      if (!changes[VERIFIED_KEY] && !changes[SESSION_PROFILE_KEY]) return;
+      if (useStore.getState().session?.tokensReady === true) return;
+      const mine = ++latest;
+      void fetchSession().then((next) => {
+        // A failed read keeps what is already shown; a reply that was overtaken by a
+        // newer read, or that arrives after unmount, is dropped.
+        if (cancelled || mine !== latest || !next) return;
+        useStore.getState().setSession(next);
+      });
+    };
+    chrome.storage.onChanged.addListener(listener);
+    return () => {
+      cancelled = true;
+      chrome.storage.onChanged.removeListener(listener);
+    };
+  }, []);
 
   async function sync() {
     setBusy(true);
@@ -123,13 +162,18 @@ function ConnectionCard() {
           <p className="mt-0.5 text-body-small text-on-surface-variant" dir={connected ? "ltr" : undefined}>
             {connected ? (session?.profile?.fbUserId ?? "") : t("home.disconnectedHint")}
           </p>
+          {verifiedAt !== undefined && !session?.tokensReady && (
+            <p className="mt-0.5 text-body-small text-on-surface-variant">
+              {t("home.verifiedAgo", { ago: relativeTime(verifiedAt, t) })}
+            </p>
+          )}
           {/*
             The name above may be one we remembered rather than one we just read. The
             warning chip already says the session is unverified, but it does not say
             that the *identity* is from memory — and a card naming an account you have
             since logged out of is worth one line to prevent.
           */}
-          {connected && session?.profileFresh === false && session.profile?.name && (
+          {connected && !verified && session?.profileFresh === false && session.profile?.name && (
             <p className="mt-0.5 text-body-small text-on-surface-variant">
               {t("home.profileRemembered")}
             </p>
@@ -261,8 +305,8 @@ function runLabel(status: RunStatus | undefined, t: (k: string) => string): stri
 function relativeTime(at: number, t: (k: string, o?: Record<string, unknown>) => string): string {
   const mins = Math.max(0, Math.round((Date.now() - at) / 60000));
   if (mins < 1) return t("home.justNow");
-  if (mins < 60) return t("home.minutesAgo", { n: mins });
+  if (mins < 60) return t("home.minutesAgo", { count: mins });
   const hours = Math.round(mins / 60);
-  if (hours < 24) return t("home.hoursAgo", { n: hours });
-  return t("home.daysAgo", { n: Math.round(hours / 24) });
+  if (hours < 24) return t("home.hoursAgo", { count: hours });
+  return t("home.daysAgo", { count: Math.round(hours / 24) });
 }

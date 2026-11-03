@@ -29,10 +29,18 @@ export async function loadAccounts(): Promise<Account[]> {
 
 /** Who is logged into Facebook in this browser right now. */
 export async function loadSession(): Promise<SessionStatus | null> {
-  const res = await rpc<SessionStatus>({ type: "GET_SESSION_STATUS" });
-  const session = res.ok && res.data ? res.data : null;
+  const session = await fetchSession();
   useStore.getState().setSession(session);
   return session;
+}
+
+/**
+ * The same question without touching the store, for a caller that has to decide
+ * whether its answer is still wanted before showing it.
+ */
+export async function fetchSession(): Promise<SessionStatus | null> {
+  const res = await rpc<SessionStatus>({ type: "GET_SESSION_STATUS" });
+  return res.ok && res.data ? res.data : null;
 }
 
 /**

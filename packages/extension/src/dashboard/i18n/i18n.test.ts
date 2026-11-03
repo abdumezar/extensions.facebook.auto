@@ -26,14 +26,25 @@ function flatten(obj: Record<string, unknown>, prefix = ""): Record<string, stri
 }
 
 /**
+ * i18next plural forms (`key_one`, `key_few`, ...). Arabic has six, English two, so the
+ * bundles legitimately differ in how many suffixed keys a plural has.
+ */
+const PLURAL_SUFFIX = /_(zero|one|two|few|many|other)$/;
+
+/** Same key set, with plural variants collapsed to the base key. */
+function baseKeys(keys: string[]): string[] {
+  return [...new Set(keys.map((k) => k.replace(PLURAL_SUFFIX, "")))].sort();
+}
+
+/**
  * The app is Arabic-first with English as the fallback locale, which means a key missing
  * from `ar` silently renders English mid-sentence rather than failing. These two checks
  * are the only thing standing between a translation slip and that.
  */
 describe("translation bundles", () => {
   it("define exactly the same keys in both languages", () => {
-    const enKeys = keysOf(en).sort();
-    const arKeys = keysOf(ar).sort();
+    const enKeys = baseKeys(keysOf(en));
+    const arKeys = baseKeys(keysOf(ar));
 
     expect(arKeys.filter((k) => !enKeys.includes(k))).toEqual([]);
     expect(enKeys.filter((k) => !arKeys.includes(k))).toEqual([]);
@@ -45,6 +56,9 @@ describe("translation bundles", () => {
 
     const mismatched = Object.keys(flatEn).filter(
       (k) =>
+        // Plurals: Arabic's one/two/zero forms spell the number out and carry no
+        // placeholder, so only the `_other` form is comparable.
+        (!PLURAL_SUFFIX.test(k) || k.endsWith("_other")) &&
         flatAr[k] !== undefined &&
         placeholdersOf(flatEn[k]!).join(",") !== placeholdersOf(flatAr[k]!).join(","),
     );
