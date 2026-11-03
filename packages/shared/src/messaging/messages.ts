@@ -19,6 +19,10 @@ export const UiRequestSchema = z.discriminatedUnion("type", [
    * one or one learned from a Facebook tab.
    */
   z.object({ type: z.literal("GET_DOC_IDS") }),
+  /** The last known result of the check for a newer release; never touches the network. */
+  z.object({ type: z.literal("GET_UPDATE_STATE") }),
+  /** Ask GitHub Releases now and return the fresh result. */
+  z.object({ type: z.literal("CHECK_FOR_UPDATE") }),
 
   // Live browser session (no cookie swap): who is logged into Facebook right now.
   z.object({ type: z.literal("GET_SESSION_STATUS") }),

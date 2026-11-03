@@ -32,6 +32,12 @@ export async function handleUiRequest(raw: unknown): Promise<UiResponse> {
       case "GET_DOC_IDS":
         return { ok: true, data: await c.docIds.list() };
 
+      case "GET_UPDATE_STATE":
+        return { ok: true, data: await c.updates.getState() };
+
+      case "CHECK_FOR_UPDATE":
+        return { ok: true, data: await c.updates.check({ manual: true }) };
+
       // ---- Live session ----
       case "GET_SESSION_STATUS":
         return { ok: true, data: await c.session.status() };

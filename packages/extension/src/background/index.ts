@@ -9,6 +9,8 @@ import { ALARM_RADAR } from "../engine/LeadRadarService.js";
 import { ALARM_GROUPS_RESUME } from "../engine/GroupSyncService.js";
 import { isFacebookPage } from "../engine/DocIdHarvester.js";
 import { measuredDefaults } from "../engine/feasibilityMath.js";
+import { ALARM_UPDATE_CHECK, UPDATE_CHECK_PERIOD_MINUTES } from "../update/UpdateService.js";
+import { shouldAnnounceUpdate } from "../update/announce.js";
 
 /**
  * Service worker entry point. Wires lifecycle, the alarm-driven campaign loop, and the
@@ -17,6 +19,18 @@ import { measuredDefaults } from "../engine/feasibilityMath.js";
  */
 
 async function bootstrap(): Promise<void> {
+  // First, and on its own: a failure further down must not leave the service worker without its
+  // update beat.
+  try {
+    await ensureUpdateAlarm();
+  } catch (err) {
+    container().logger.warn("Could not schedule the update check", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+  // Never throws, and nothing waits on it: a slow or unreachable GitHub must not hold
+  // up the rest of startup.
+  void container().updates.check();
   await installDnrRules();
   // If a run was mid-flight when the SW was evicted, make sure its alarm exists.
   const state = await container().engine.getState();
@@ -44,6 +58,31 @@ async function bootstrap(): Promise<void> {
 }
 
 /**
+ * The slow, unattended "is there a newer release" beat. Created only when absent:
+ * re-creating an alarm restarts its period, and a service worker that wakes often would
+ * otherwise keep pushing the next check away.
+ */
+async function ensureUpdateAlarm(): Promise<void> {
+  if (await chrome.alarms.get(ALARM_UPDATE_CHECK)) return;
+  await chrome.alarms.create(ALARM_UPDATE_CHECK, { periodInMinutes: UPDATE_CHECK_PERIOD_MINUTES });
+}
+
+/**
+ * Opens the dashboard on `?updatedFrom=<previous>` so it can say what changed. Reuses a
+ * dashboard tab that is already open rather than adding a second one.
+ */
+async function openDashboardAfterUpdate(previousVersion: string): Promise<void> {
+  const base = chrome.runtime.getURL("src/dashboard/index.html");
+  const url = `${base}?updatedFrom=${encodeURIComponent(previousVersion)}`;
+  const [existing] = await chrome.tabs.query({ url: `${base}*` });
+  if (existing?.id != null) {
+    await chrome.tabs.update(existing.id, { url, active: true });
+    return;
+  }
+  await chrome.tabs.create({ url });
+}
+
+/**
  * The safe call rate the rate ramp established, if it ever ran to a conclusion.
  * `ceilingPostsPerHour` is the last tier that held; `measuredDefaults` derates it.
  */
@@ -52,7 +91,12 @@ function measuredCeiling(record: { ramp?: { ceilingPostsPerHour?: number } }) {
   return ceiling ? measuredDefaults(ceiling) : null;
 }
 
-chrome.runtime.onInstalled.addListener(() => void bootstrap());
+chrome.runtime.onInstalled.addListener((details) => {
+  void bootstrap();
+  if (shouldAnnounceUpdate(details, chrome.runtime.getManifest().version)) {
+    void openDashboardAfterUpdate(details.previousVersion);
+  }
+});
 chrome.runtime.onStartup.addListener(() => void bootstrap());
 
 /**
@@ -93,6 +137,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === ALARM_RAMP) {
     void container().feasibility.rampTick();
+    return;
+  }
+  if (alarm.name === ALARM_UPDATE_CHECK) {
+    void container().updates.check();
     return;
   }
   if (alarm.name === ALARM_RADAR) {

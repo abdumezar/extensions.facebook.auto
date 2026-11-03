@@ -29,6 +29,11 @@ import { FeasibilityRunner } from "../engine/FeasibilityRunner.js";
 import { LinkPreviewService } from "../engine/LinkPreviewService.js";
 import { DocIdStore } from "../engine/DocIdStore.js";
 import { DocIdHarvester } from "../engine/DocIdHarvester.js";
+import { UpdateService } from "../update/UpdateService.js";
+
+/** Where the service worker asks whether a newer release has been published. */
+const RELEASES_API_URL =
+  "https://api.github.com/repos/abdumezar/extensions.facebook.auto/releases/latest";
 
 /**
  * Composition root. Builds every engine module from platform adapters exactly once.
@@ -222,6 +227,17 @@ export class Container {
       return first?.result;
     },
   });
+
+  /**
+   * Plain http, not the governed instance: this talks to GitHub, and a request there
+   * has no business spending the Facebook call budget.
+   */
+  readonly updates = new UpdateService(
+    this.rawHttp,
+    this.storage,
+    RELEASES_API_URL,
+    () => chrome.runtime.getManifest().version,
+  );
 
   /** The recipe to post with: the bundled one, with any doc_ids learned since. */
   async getRecipe(): Promise<FbRecipe> {

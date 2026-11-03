@@ -12,6 +12,7 @@ export * from "./types/link.js";
 export * from "./types/contact.js";
 export * from "./types/audience.js";
 export * from "./types/governor.js";
+export * from "./types/update.js";
 
 // Facebook shape isolation
 export * from "./recipe/fbRecipe.js";
