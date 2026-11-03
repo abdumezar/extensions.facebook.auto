@@ -343,6 +343,12 @@ export const ar = {
     rowCount: "يُعرض {{shown}} من {{total}}",
     empty: "لم يُستخرج شيء بعد.",
     openProfile: "الملف الشخصي",
+    col: {
+      person: "الشخص",
+      contact: "بيانات التواصل",
+      signal: "التفاعل",
+      actions: "الإجراءات",
+    },
     suppress: "عدم التواصل",
     progress: "{{found}} شخصاً · {{withContact}} لديهم بيانات تواصل",
     pages: "{{reactors}} صفحة تفاعلات · {{comments}} صفحة تعليقات",

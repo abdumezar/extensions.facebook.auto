@@ -333,6 +333,12 @@ export const en = {
     rowCount: "Showing {{shown}} of {{total}}",
     empty: "Nothing extracted yet.",
     openProfile: "Profile",
+    col: {
+      person: "Person",
+      contact: "Contact details",
+      signal: "Activity",
+      actions: "Actions",
+    },
     suppress: "Do not contact",
     progress: "{{found}} people · {{withContact}} with contact details",
     pages: "{{reactors}} reactor pages · {{comments}} comment pages",
