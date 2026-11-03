@@ -13,8 +13,24 @@ updates:
     commit-message:
       prefix: "chore(deps)"
     groups:
+      # react and react-dom must move together in version updates; a lone react bump
+      # breaks the dashboard at runtime. Listed first and excluded below, so the split
+      # never depends on group order alone.
+      react:
+        patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
       minor-and-patch:
         update-types: [minor, patch]
+        exclude-patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
+    ignore:
+      # React 19 is a deliberate migration (JSX namespace, act, typings), not a weekly bump.
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react-dom"
+        update-types: ["version-update:semver-major"]
 
   # The actions in .github/workflows, which are pinned by commit SHA.
   - package-ecosystem: github-actions
