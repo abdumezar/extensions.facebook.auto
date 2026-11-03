@@ -6,7 +6,11 @@ import { scrapeTokens, scrapeProfile, checkHealth } from "./domTokens.js";
  * from the service worker: scrape fresh session tokens, read c_user, or classify
  * session health. It never posts; posting is done from the SW via fetch + DNR.
  */
-chrome.runtime.onMessage.addListener((raw, _sender, sendResponse) => {
+function onMessage(
+  raw: unknown,
+  _sender: chrome.runtime.MessageSender,
+  sendResponse: (response: ContentResponse) => void,
+): boolean {
   const parsed = ContentRequestSchema.safeParse(raw);
   if (!parsed.success) {
     sendResponse({ ok: false, error: "Invalid content request" } satisfies ContentResponse);
@@ -51,4 +55,21 @@ chrome.runtime.onMessage.addListener((raw, _sender, sendResponse) => {
     } satisfies ContentResponse);
   }
   return false;
-});
+}
+
+/**
+ * The service worker injects this file into Facebook tabs that were already open, and
+ * Chrome may have injected it too. Whichever copy runs last owns the page: it removes
+ * the listener the earlier one left in the shared window, so exactly one ever answers.
+ * A stale flag from an orphaned copy (its extension was reloaded) can throw on removal;
+ * that must not stop the new copy from installing itself.
+ */
+type ContentGuard = { dispose: () => void };
+const guarded = globalThis as { __nashirContent?: ContentGuard };
+try {
+  guarded.__nashirContent?.dispose();
+} catch {
+  // The previous copy's extension context is gone; there is nothing left to undo.
+}
+chrome.runtime.onMessage.addListener(onMessage);
+guarded.__nashirContent = { dispose: () => chrome.runtime.onMessage.removeListener(onMessage) };

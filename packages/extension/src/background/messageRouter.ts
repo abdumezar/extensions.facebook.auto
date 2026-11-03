@@ -10,6 +10,13 @@ import { openOrFocusDashboard } from "./singleInstance.js";
 import { FacebookClient } from "../engine/FacebookClient.js";
 import { toCsv, toJson, toPhoneCsv } from "../engine/audienceExport.js";
 
+/** Which of the usual causes a failed session bootstrap looks like, for the log. */
+function bootstrapFailureReason(error: string): string {
+  if (error.includes("(inject:")) return "Facebook tab cannot be scripted";
+  if (error.includes("Not logged in")) return "logged out of Facebook";
+  return "other";
+}
+
 /**
  * Routes typed UiRequests from the dashboard/popup to the engine. Returns a
  * uniform { ok, data?, error? } envelope. All handlers are async.
@@ -79,9 +86,8 @@ export async function handleUiRequest(raw: unknown): Promise<UiResponse> {
           // A failed bootstrap must still render a dashboard. Whatever is cached is
           // better than an error page.
           const cache = await c.groups.getCache(CURRENT_SESSION);
-          c.logger.warn("Session bootstrap failed", {
-            error: err instanceof Error ? err.message : String(err),
-          });
+          const error = err instanceof Error ? err.message : String(err);
+          c.logger.warn("Session bootstrap failed", { reason: bootstrapFailureReason(error), error });
           return { ok: true, data: { session: quick, groups: cache.groups } };
         } finally {
           await c.tab.releaseOwnedTab?.();

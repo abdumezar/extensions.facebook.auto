@@ -11,6 +11,7 @@ import { isFacebookPage } from "../engine/DocIdHarvester.js";
 import { measuredDefaults } from "../engine/feasibilityMath.js";
 import { ALARM_UPDATE_CHECK, UPDATE_CHECK_PERIOD_MINUTES } from "../update/UpdateService.js";
 import { shouldAnnounceUpdate } from "../update/announce.js";
+import { injectContentScriptIntoTabs } from "../platform/ChromeTabs.js";
 
 /**
  * Service worker entry point. Wires lifecycle, the alarm-driven campaign loop, and the
@@ -91,8 +92,27 @@ function measuredCeiling(record: { ramp?: { ceilingPostsPerHour?: number } }) {
   return ceiling ? measuredDefaults(ceiling) : null;
 }
 
+/**
+ * Chrome does not inject a manifest content script into tabs that were open before the
+ * extension was installed or reloaded, so on the first run the Facebook tabs the user
+ * already has are deaf. Give them the script, and only then read the profile, so the
+ * first dashboard open already knows the name and photo.
+ */
+async function prepareOpenFacebookTabs(): Promise<void> {
+  try {
+    const tabs = await chrome.tabs.query({ url: "*://*.facebook.com/*" });
+    await injectContentScriptIntoTabs(tabs.flatMap((t) => (t.id != null ? [t.id] : [])));
+  } catch (err) {
+    container().logger.warn("Could not prepare open Facebook tabs", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+  await container().session.refreshProfileIfPossible();
+}
+
 chrome.runtime.onInstalled.addListener((details) => {
   void bootstrap();
+  void prepareOpenFacebookTabs();
   if (shouldAnnounceUpdate(details, chrome.runtime.getManifest().version)) {
     void openDashboardAfterUpdate(details.previousVersion);
   }

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ChromeTabs } from "./ChromeTabs.js";
+import { ChromeTabs, injectContentScriptIntoTabs } from "./ChromeTabs.js";
 
 /**
  * A minimal chrome.tabs, enough to exercise the one rule that matters here: we may
@@ -129,5 +129,117 @@ describe("releaseOwnedTab", () => {
     expect(await t.ensureFacebookTab()).toBe(9);
     await t.releaseOwnedTab();
     expect(c.removed).toEqual([mine]);
+  });
+});
+
+const CONTENT_FILE = "assets/content.js";
+const NO_RECEIVER = "Could not establish connection. Receiving end does not exist.";
+
+/**
+ * chrome.tabs.sendMessage plus chrome.scripting.executeScript, with a scripted run of
+ * sendMessage outcomes: a string rejects with that message, anything else resolves.
+ */
+function stubMessaging(opts: {
+  outcomes: Array<string | { ok: boolean; data?: unknown }>;
+  manifest?: unknown;
+  injectError?: string;
+}) {
+  const outcomes = [...opts.outcomes];
+  const sent: number[] = [];
+  const injected: Array<{ target: { tabId: number }; files: string[] }> = [];
+  vi.stubGlobal("chrome", {
+    runtime: {
+      getManifest: () =>
+        "manifest" in opts
+          ? opts.manifest
+          : { content_scripts: [{ matches: ["*://*.facebook.com/*"], js: [CONTENT_FILE] }] },
+    },
+    tabs: {
+      async sendMessage(tabId: number) {
+        sent.push(tabId);
+        const next = outcomes.shift();
+        if (typeof next === "string") throw new Error(next);
+        return next;
+      },
+    },
+    scripting: {
+      async executeScript(inj: { target: { tabId: number }; files: string[] }) {
+        injected.push(inj);
+        if (opts.injectError) throw new Error(opts.injectError);
+        return [];
+      },
+    },
+  });
+  return { sent, injected };
+}
+
+describe("callContent", () => {
+  it("injects the content script and retries once when the receiver is missing", async () => {
+    // A tab that was already open when the extension was installed or reloaded never
+    // got the manifest's content script, so the first message has nobody to hear it.
+    const c = stubMessaging({ outcomes: [NO_RECEIVER, { ok: true, data: "tokens" }] });
+    const res = await new ChromeTabs().callContent(11, { type: "SCRAPE_TOKENS" });
+    expect(res).toEqual({ ok: true, data: "tokens" });
+    expect(c.injected).toEqual([{ target: { tabId: 11 }, files: [CONTENT_FILE] }]);
+    expect(c.sent).toEqual([11, 11]);
+  });
+
+  it("does not inject for other errors", async () => {
+    const closed = "The message port closed before a response was received.";
+    const c = stubMessaging({ outcomes: [closed] });
+    const res = await new ChromeTabs().callContent(11, { type: "SCRAPE_TOKENS" });
+    expect(res).toEqual({ ok: false, error: closed });
+    expect(c.injected).toEqual([]);
+    expect(c.sent).toHaveLength(1);
+  });
+
+  it("never retries more than once", async () => {
+    const c = stubMessaging({ outcomes: [NO_RECEIVER, NO_RECEIVER, { ok: true }] });
+    const res = await new ChromeTabs().callContent(11, { type: "SCRAPE_TOKENS" });
+    expect(res).toEqual({ ok: false, error: NO_RECEIVER });
+    expect(c.injected).toHaveLength(1);
+    expect(c.sent).toHaveLength(2);
+  });
+
+  it("returns the original error when the manifest has no content script", async () => {
+    const c = stubMessaging({ outcomes: [NO_RECEIVER], manifest: {} });
+    const res = await new ChromeTabs().callContent(11, { type: "SCRAPE_TOKENS" });
+    expect(res).toEqual({ ok: false, error: NO_RECEIVER });
+    expect(c.injected).toEqual([]);
+  });
+
+  it("returns the original error, plus why, when injection is rejected", async () => {
+    // A discarded tab or an error page cannot be scripted. Keeping both messages is what
+    // lets a log tell "no receiver" from "no receiver and could not be scripted".
+    const c = stubMessaging({ outcomes: [NO_RECEIVER], injectError: "Cannot access contents of url" });
+    const res = await new ChromeTabs().callContent(11, { type: "SCRAPE_TOKENS" });
+    expect(res).toEqual({ ok: false, error: `${NO_RECEIVER} (inject: Cannot access contents of url)` });
+    expect(c.sent).toHaveLength(1);
+  });
+});
+
+describe("injectContentScriptIntoTabs", () => {
+  it("injects every tab, and one failing tab does not stop the rest", async () => {
+    const calls: number[] = [];
+    vi.stubGlobal("chrome", {
+      runtime: {
+        getManifest: () => ({ content_scripts: [{ matches: ["*://*.facebook.com/*"], js: [CONTENT_FILE] }] }),
+      },
+      scripting: {
+        async executeScript(inj: { target: { tabId: number } }) {
+          calls.push(inj.target.tabId);
+          if (inj.target.tabId === 2) throw new Error("Tab was discarded");
+          return [];
+        },
+      },
+    });
+    await expect(injectContentScriptIntoTabs([1, 2, 3])).resolves.toBeUndefined();
+    expect(calls).toEqual([1, 2, 3]);
+  });
+
+  it("does nothing when the manifest has no content script", async () => {
+    const c = stubMessaging({ outcomes: [], manifest: {} });
+    await injectContentScriptIntoTabs([1]);
+    expect(c.injected).toEqual([]);
   });
 });

@@ -1,6 +1,34 @@
 import type { TabPort } from "../engine/ports/index.js";
 import type { ContentRequest, ContentResponse } from "@nashir/shared";
 
+/** What Chrome says when a tab has no content-script listener (substring, case-sensitive). */
+const NO_RECEIVER = "Receiving end does not exist";
+
+/** The content script's file as the running manifest names it, or null when it has none. */
+function contentScriptFile(): string | null {
+  return chrome.runtime.getManifest().content_scripts?.[0]?.js?.[0] ?? null;
+}
+
+/** Injects the content script into one tab. Resolves to the failure reason, or null. */
+async function injectContentScript(tabId: number, file: string): Promise<string | null> {
+  try {
+    await chrome.scripting.executeScript({ target: { tabId }, files: [file] });
+    return null;
+  } catch (err) {
+    return err instanceof Error ? err.message : String(err);
+  }
+}
+
+/**
+ * Gives each tab the content script and waits for all of them. A tab that cannot be
+ * scripted (discarded, still loading, an error page) is skipped; it never throws.
+ */
+export async function injectContentScriptIntoTabs(tabIds: number[]): Promise<void> {
+  const file = contentScriptFile();
+  if (!file) return;
+  await Promise.all(tabIds.map((id) => injectContentScript(id, file)));
+}
+
 /**
  * TabPort backed by chrome.tabs. Owns a dedicated, minimized facebook.com tab used
  * for token scraping / health checks / posting relays. Offscreen documents can't host
@@ -75,6 +103,20 @@ export class ChromeTabs implements TabPort {
   }
 
   async callContent<T>(tabId: number, msg: ContentRequest): Promise<ContentResponse<T>> {
+    const first = await this.send<T>(tabId, msg);
+    if (first.ok || !first.error?.includes(NO_RECEIVER)) return first;
+
+    // Chrome only injects a manifest content script into tabs that load after the
+    // extension does. A Facebook tab that was already open when the extension was
+    // installed or reloaded has no listener, so give it one and ask again, once.
+    const file = contentScriptFile();
+    if (!file) return first;
+    const injectError = await injectContentScript(tabId, file);
+    if (injectError) return { ok: false, error: `${first.error} (inject: ${injectError})` };
+    return this.send<T>(tabId, msg);
+  }
+
+  private async send<T>(tabId: number, msg: ContentRequest): Promise<ContentResponse<T>> {
     try {
       const res = (await chrome.tabs.sendMessage(tabId, msg)) as ContentResponse<T>;
       return res ?? { ok: false, error: "No response from content script" };
