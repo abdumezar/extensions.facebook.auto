@@ -29,6 +29,9 @@ export async function handleUiRequest(raw: unknown): Promise<UiResponse> {
       case "GET_VERSION":
         return { ok: true, data: { name: PRODUCT_NAME, version: chrome.runtime.getManifest().version } };
 
+      case "GET_DOC_IDS":
+        return { ok: true, data: await c.docIds.list() };
+
       // ---- Live session ----
       case "GET_SESSION_STATUS":
         return { ok: true, data: await c.session.status() };

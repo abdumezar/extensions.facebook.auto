@@ -104,7 +104,7 @@ export function applyDocIdOverrides(recipe: FbRecipe, overrides: DocIdOverrides)
  * Untrusted page output -> clean friendlyName -> docId map. Only known operations,
  * numeric ids, and nothing that is really another operation's bundled id. Operations
  * that share one bundled id are ambiguous, so a harvested value equal to it is
- * dropped for both.
+ * dropped for both, and so is any id the page returned under more than one name.
  */
 export function sanitizeHarvest(
   raw: unknown,
@@ -114,11 +114,16 @@ export function sanitizeHarvest(
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return clean;
   const source = raw as Record<string, unknown>;
   const bundledIds = new Map(Object.entries(bundled));
+  const seen: Array<[string, string]> = [];
   // Walk the bundled names, not the input: bounds the work and the result size.
   for (const name of bundledIds.keys()) {
     if (!Object.prototype.hasOwnProperty.call(source, name)) continue;
     const value = source[name];
-    if (typeof value !== "string" || !DOC_ID_PATTERN.test(value)) continue;
+    if (typeof value === "string" && DOC_ID_PATTERN.test(value)) seen.push([name, value]);
+  }
+  for (const [name, value] of seen) {
+    // One id under two names means the page's answer is not trustworthy for either.
+    if (seen.filter(([, other]) => other === value).length > 1) continue;
     const belongsToOther = [...bundledIds].some(
       ([otherName, otherId]) => otherName !== name && otherId === value,
     );

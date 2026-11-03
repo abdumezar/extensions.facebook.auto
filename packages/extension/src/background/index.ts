@@ -7,6 +7,7 @@ import { ALARM_RAMP } from "../engine/FeasibilityRunner.js";
 import { ALARM_ENGAGEMENT } from "../engine/EngagementService.js";
 import { ALARM_RADAR } from "../engine/LeadRadarService.js";
 import { ALARM_GROUPS_RESUME } from "../engine/GroupSyncService.js";
+import { isFacebookPage } from "../engine/DocIdHarvester.js";
 import { measuredDefaults } from "../engine/feasibilityMath.js";
 
 /**
@@ -59,7 +60,7 @@ chrome.runtime.onStartup.addListener(() => void bootstrap());
  * tab to open, no cookie swap, nothing for the user to notice. That is the cheapest
  * possible time to refresh the group cache, so we take it (throttled inside GroupSync).
  */
-chrome.tabs.onUpdated.addListener((_tabId, info, tab) => {
+chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
   if (info.status !== "complete" || !tab.url?.includes("facebook.com")) return;
   void container().groupSync.syncIfStale();
   // The same free moment is when the viewer's name and avatar are readable. Scraping
@@ -67,6 +68,9 @@ chrome.tabs.onUpdated.addListener((_tabId, info, tab) => {
   // opened, no Facebook request, nothing spent from the call budget. It is what makes
   // the dashboard know who you are before you have opened Facebook in this session.
   void container().session.refreshProfileIfPossible();
+  // And the moment to see which doc_ids Facebook's own code is using right now. Reads
+  // the page that is already open; throttled per tab inside the harvester.
+  if (isFacebookPage(tab.url)) void container().harvester.maybeHarvest(tabId);
 });
 
 // Popup / dashboard open request → single-instance dashboard tab.

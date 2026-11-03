@@ -190,7 +190,8 @@ describe("sanitizeHarvest", () => {
     expect(sanitizeHarvest(null, bundled)).toEqual({});
     expect(sanitizeHarvest("A", bundled)).toEqual({});
     // A's value is B's bundled id: a mix-up, dropped. Own bundled id is fine.
-    expect(sanitizeHarvest({ A: "20000", B: "20000" }, bundled)).toEqual({ B: "20000" });
+    expect(sanitizeHarvest({ A: "20000" }, bundled)).toEqual({});
+    expect(sanitizeHarvest({ B: "20000" }, bundled)).toEqual({ B: "20000" });
     // Entry count never exceeds the number of bundled operations.
     const big = Object.fromEntries(
       Array.from({ length: 50 }, (_, i) => [`N${i}`, String(100000 + i)]),
@@ -203,6 +204,12 @@ describe("sanitizeHarvest", () => {
     expect(Object.keys(sanitizeHarvest(noisy, two)).length).toBeLessThanOrEqual(2);
     // Two operations sharing a bundled id are ambiguous: both dropped.
     expect(sanitizeHarvest({ A: "55555", B: "55555" }, { A: "55555", B: "55555" })).toEqual({});
+  });
+
+  it("drops an id that shows up under more than one name in the harvest", () => {
+    expect(sanitizeHarvest({ A: "77777", B: "77777", C: "88888" }, bundled)).toEqual({ C: "88888" });
+    // Even when one of them is that operation's own bundled id.
+    expect(sanitizeHarvest({ A: "20000", B: "20000" }, bundled)).toEqual({});
   });
 
   it("accepts null-prototype raw and bundled inputs", () => {

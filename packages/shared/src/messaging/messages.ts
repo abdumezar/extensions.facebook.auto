@@ -14,6 +14,11 @@ import { z } from "zod";
 export const UiRequestSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("PING") }),
   z.object({ type: z.literal("GET_VERSION") }),
+  /**
+   * Every Facebook operation with the doc_id in force and whether it is the bundled
+   * one or one learned from a Facebook tab.
+   */
+  z.object({ type: z.literal("GET_DOC_IDS") }),
 
   // Live browser session (no cookie swap): who is logged into Facebook right now.
   z.object({ type: z.literal("GET_SESSION_STATUS") }),

@@ -1,4 +1,4 @@
-import { DEFAULT_FB_RECIPE, type FbRecipe } from "@nashir/shared";
+import { DEFAULT_FB_RECIPE, applyDocIdOverrides, type FbRecipe } from "@nashir/shared";
 import { ChromeStorage } from "../platform/ChromeStorage.js";
 import { ChromeCookies } from "../platform/ChromeCookies.js";
 import { ChromeAlarms } from "../platform/ChromeAlarms.js";
@@ -27,6 +27,8 @@ import { MediaStore } from "../engine/MediaStore.js";
 import { CampaignEngine } from "../engine/CampaignEngine.js";
 import { FeasibilityRunner } from "../engine/FeasibilityRunner.js";
 import { LinkPreviewService } from "../engine/LinkPreviewService.js";
+import { DocIdStore } from "../engine/DocIdStore.js";
+import { DocIdHarvester } from "../engine/DocIdHarvester.js";
 
 /**
  * Composition root. Builds every engine module from platform adapters exactly once.
@@ -202,9 +204,37 @@ export class Container {
     },
   });
 
-  /** The recipe to post with. */
-  getRecipe(): Promise<FbRecipe> {
-    return Promise.resolve(DEFAULT_FB_RECIPE);
+  /** doc_ids seen on Facebook's own pages, layered over the bundled recipe. */
+  readonly docIds = new DocIdStore(this.storage, this.logger);
+  readonly harvester = new DocIdHarvester({
+    storage: this.storage,
+    store: this.docIds,
+    logger: this.logger,
+    // MAIN world, because the relay operation modules are not reachable from the
+    // extension's isolated world. The function is self-contained for that reason.
+    run: async (tabId, func, args) => {
+      const [first] = await chrome.scripting.executeScript({
+        target: { tabId },
+        world: "MAIN",
+        func,
+        args,
+      });
+      return first?.result;
+    },
+  });
+
+  /** The recipe to post with: the bundled one, with any doc_ids learned since. */
+  async getRecipe(): Promise<FbRecipe> {
+    // Every posting path reads the recipe, so it must never depend on the override
+    // store: if that cannot be read, the bundled recipe is the answer.
+    try {
+      return applyDocIdOverrides(DEFAULT_FB_RECIPE, await this.docIds.get());
+    } catch (err) {
+      this.logger.warn("Could not read learned doc_ids; using the bundled recipe", {
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return DEFAULT_FB_RECIPE;
+    }
   }
 }
 

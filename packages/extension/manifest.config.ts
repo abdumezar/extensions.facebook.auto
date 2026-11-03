@@ -5,6 +5,7 @@ import { defineManifest } from "@crxjs/vite-plugin";
  *  - `cookies`  : needed for the multi-account cookie-swap engine.
  *  - `alarms`   : drives the durable, SW-eviction-safe campaign loop.
  *  - `offscreen`: reserved for future DOM work off the service worker.
+ *  - `scripting`: reads the doc_ids Facebook's own page is using (see DocIdHarvester).
  *
  * `declarativeNetRequest` rules are added dynamically at runtime (see dnrManager) using
  * `chrome.runtime.id`, never a hardcoded extension id.
@@ -53,6 +54,7 @@ export default defineManifest({
     "notifications",
     "offscreen",
     "declarativeNetRequest",
+    "scripting",
   ],
 
   host_permissions: ["*://*.facebook.com/*", "*://upload.facebook.com/*"],
