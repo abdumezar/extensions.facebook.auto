@@ -1,0 +1,349 @@
+name: Release
+
+# Pushing a tag v<version> builds the extension, signs it and publishes a GitHub Release.
+# Running the workflow by hand is a dry run: the same build and the same signing, with the
+# tag check and the publish step left out.
+#
+#   build    no secrets; tests, builds, packs and checks the result
+#   sign     runs in the "release" environment, where the owner approves and the key lives
+#   publish  creates the GitHub Release (tag runs only)
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      zip_sha256: ${{ steps.pack.outputs.zip_sha256 }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # The whole history, so a tag run can prove the tagged commit is on main.
+          fetch-depth: 0
+
+      # The checks below run before the install, on the same Node.js as the build.
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Check the tag against the version
+        id: version
+        env:
+          EVENT: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          version=$(node -p "JSON.parse(fs.readFileSync('packages/extension/package.json', 'utf8')).version")
+          if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::packages/extension/package.json version '$version' is not MAJOR.MINOR.PATCH."
+            exit 1
+          fi
+          if [ "$EVENT" = push ]; then
+            if [ "$REF_NAME" != "v$version" ]; then
+              echo "::error::Tag '$REF_NAME' does not match the extension version; expected 'v$version'."
+              exit 1
+            fi
+            if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+              echo "::error::Tag '$REF_NAME' points at a commit that is not on main."
+              exit 1
+            fi
+          else
+            echo "Dry run: tag and branch checks skipped."
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      # Before the install and the build, so a missing entry fails in seconds. A tag run
+      # needs a dated heading; a dry run only needs the section to exist.
+      - name: Extract the release notes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          REQUIRE_DATE: ${{ github.event_name == 'push' }}
+        run: |
+          mkdir release-notes
+          node <<'NODE'
+          const fs = require("node:fs");
+          const version = process.env.VERSION;
+          const lines = fs.readFileSync("CHANGELOG.md", "utf8").split(/\r?\n/);
+          const heading = /^## \[([^\]]+)\](?: - (.*))?$/;
+          const start = lines.findIndex((line) => heading.exec(line)?.[1] === version);
+          if (start === -1) {
+            console.error(`::error::CHANGELOG.md has no '## [${version}]' section.`);
+            process.exit(1);
+          }
+          const date = (heading.exec(lines[start])[2] ?? "").trim();
+          // A real calendar day: 2026-02-31 has the right shape and is not a date.
+          const isDate = (text) => {
+            const parsed = new Date(`${text}T00:00:00Z`);
+            return /^\d{4}-\d{2}-\d{2}$/.test(text) && !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === text;
+          };
+          if (process.env.REQUIRE_DATE === "true" && !isDate(date)) {
+            console.error(`::error::The CHANGELOG.md heading for ${version} must carry a real release date (YYYY-MM-DD), not '${date}'.`);
+            process.exit(1);
+          }
+          const rest = lines.slice(start + 1);
+          const end = rest.findIndex((line) => line.startsWith("## "));
+          const body = (end === -1 ? rest : rest.slice(0, end));
+          // Keep a Changelog puts link definitions after the last section.
+          while (body.length > 0 && /^(\s*|\[[^\]]+\]:\s.*)$/.test(body[body.length - 1])) body.pop();
+          const notes = body.join("\n").trim();
+          if (notes === "") {
+            console.error(`::error::The CHANGELOG.md section for ${version} is empty.`);
+            process.exit(1);
+          }
+          fs.writeFileSync("release-notes/release-notes.md", notes + "\n");
+          console.log(`Release notes for ${version} (${date || "no date"}): ${notes.split("\n").length} lines.`);
+          NODE
+
+      - name: Upload the release notes
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-notes
+          path: release-notes/
+          if-no-files-found: error
+          retention-days: 7
+
+      # pnpm's version comes from "packageManager" in package.json. No dependency cache
+      # anywhere in this job: what gets signed is built from the lockfile and nothing else.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      # scripts/pack.test.ts cross-checks the zip it writes with Python's zipfile module.
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Test
+        run: pnpm test
+      - name: Build
+        run: pnpm build
+
+      # A test build carries a marker, a localhost update URL and a localhost host
+      # permission. None of that may reach users.
+      - name: Check this is a release build
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          cd packages/extension
+          if grep -rqF -e NASHIR_E2E_BUILD dist; then
+            echo "::error::dist contains the NASHIR_E2E_BUILD marker; this is a test build."
+            exit 1
+          fi
+          node <<'NODE'
+          const fs = require("node:fs");
+          const text = fs.readFileSync("dist/manifest.json", "utf8");
+          const manifest = JSON.parse(text);
+          const problems = [];
+          if (manifest.version !== process.env.VERSION) {
+            problems.push(`manifest version ${manifest.version} is not ${process.env.VERSION}`);
+          }
+          if (/127\.0\.0\.1|localhost/i.test(text)) problems.push("manifest mentions a local address");
+          // Same rule as the packer: a web-accessible file a facebook.com page can request
+          // would show that the extension is installed.
+          const reachesFacebook = (pattern) =>
+            /facebook\.com/i.test(pattern) || pattern === "<all_urls>" || /^(\*|https?):\/\/\*\//.test(pattern);
+          for (const entry of manifest.web_accessible_resources ?? []) {
+            if ((entry.matches ?? []).some(reachesFacebook)) {
+              problems.push(`web_accessible_resources reaches facebook.com: ${JSON.stringify(entry)}`);
+            }
+          }
+          if (problems.length > 0) {
+            for (const problem of problems) console.error(`::error::${problem}`);
+            process.exit(1);
+          }
+          console.log("dist is a release build.");
+          NODE
+
+      - name: Pack
+        id: pack
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          pnpm --filter @nashir/extension pack:ext
+          cd packages/extension/release
+          if [ "$(ls)" != "nashir-$VERSION.zip" ]; then
+            echo "::error::Expected exactly nashir-$VERSION.zip in release/, found: $(ls | tr '\n' ' ')"
+            exit 1
+          fi
+          sha256=$(sha256sum "nashir-$VERSION.zip" | cut -d ' ' -f 1)
+          echo "zip_sha256=$sha256" >> "$GITHUB_OUTPUT"
+          echo "nashir-$VERSION.zip  sha256 $sha256"
+
+      - name: Upload the unsigned archive
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-unsigned
+          path: packages/extension/release/
+          if-no-files-found: error
+          retention-days: 7
+
+  sign:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # The owner approves this job, and RELEASE_SIGNING_KEY is an environment secret, so it
+    # is only readable from here. No dependencies are installed in this job: the signer
+    # uses Node's own modules, and a package that ran here could read the key.
+    environment: release
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the signer and the public keys
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            /packages/extension/scripts/sign-release.mjs
+            /packages/extension/src/update/releaseKeys.json
+          sparse-checkout-cone-mode: false
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Download the unsigned archive
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-unsigned
+          path: release
+
+      - name: Check the archive is the one the build made
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+          EXPECTED_SHA256: ${{ needs.build.outputs.zip_sha256 }}
+        run: |
+          if [ "$(ls release)" != "nashir-$VERSION.zip" ]; then
+            echo "::error::Expected exactly nashir-$VERSION.zip, found: $(ls release | tr '\n' ' ')"
+            exit 1
+          fi
+          actual=$(sha256sum "release/nashir-$VERSION.zip" | cut -d ' ' -f 1)
+          if [ "$actual" != "$EXPECTED_SHA256" ]; then
+            echo "::error::The archive's SHA-256 ($actual) is not the one the build job reported ($EXPECTED_SHA256)."
+            exit 1
+          fi
+
+      - name: Sign
+        env:
+          RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: node packages/extension/scripts/sign-release.mjs "release/nashir-$VERSION.zip"
+
+      # The signer checks its own signature before it writes anything. This reads the files
+      # it wrote and checks them again, the way an installed extension will.
+      - name: Verify the signature and the checksum file
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          node <<'NODE'
+          const { createHash } = require("node:crypto");
+          const fs = require("node:fs");
+          const path = require("node:path");
+          const { pathToFileURL } = require("node:url");
+          (async () => {
+            const { verifyWithRawKey } = await import(
+              pathToFileURL(path.resolve("packages/extension/scripts/sign-release.mjs")).href
+            );
+            const name = `nashir-${process.env.VERSION}.zip`;
+            const zip = fs.readFileSync(path.join("release", name));
+            const sig = fs.readFileSync(path.join("release", `${name}.sig`), "utf8");
+            const keys = JSON.parse(fs.readFileSync("packages/extension/src/update/releaseKeys.json", "utf8"));
+            if (!Array.isArray(keys) || keys.length === 0) throw new Error("releaseKeys.json lists no keys.");
+            const verified = keys.findIndex((key) => verifyWithRawKey(zip, sig, key));
+            if (verified === -1) throw new Error(`${name}.sig verifies against none of the ${keys.length} release keys.`);
+            const sha256 = createHash("sha256").update(zip).digest("hex");
+            const sums = fs.readFileSync(path.join("release", "SHA256SUMS"), "utf8").split("\n");
+            if (!sums.includes(`${sha256}  ${name}`)) throw new Error(`SHA256SUMS has no line for ${name} with ${sha256}.`);
+            const files = fs.readdirSync("release").sort().join(", ");
+            const expected = [name, `${name}.sig`, "SHA256SUMS"].sort().join(", ");
+            if (files !== expected) throw new Error(`release/ holds '${files}', expected '${expected}'.`);
+            console.log(`${name}.sig verifies against release key ${verified + 1} of ${keys.length}.`);
+          })().catch((error) => {
+            console.error(`::error::${error.message}`);
+            process.exit(1);
+          });
+          NODE
+
+      # Not on a dry run: the dry run proves the key and the checks, and publishes nothing,
+      # so it leaves no signed files behind either.
+      - name: Upload the signed release files
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-signed
+          path: release/
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    # Tag pushes only. A dry run ends after the sign job.
+    if: github.event_name == 'push'
+    needs: [build, sign]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Download the signed release files
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-signed
+          path: release
+      - name: Download the release notes
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-notes
+          path: release-notes
+      # The tag could have been moved since the run started; the release must be of the
+      # commit that was built and approved.
+      - name: Check the tag still points at the built commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          tagged=$(gh api "repos/$GH_REPO/commits/refs/tags/$TAG" --jq .sha)
+          if [ "$tagged" != "$GITHUB_SHA" ]; then
+            echo "::error::Tag '$TAG' now points at $tagged, not at the built commit $GITHUB_SHA."
+            exit 1
+          fi
+      - name: Check the archive is the one that was built
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+          EXPECTED_SHA256: ${{ needs.build.outputs.zip_sha256 }}
+        run: |
+          actual=$(sha256sum "release/nashir-$VERSION.zip" | cut -d ' ' -f 1)
+          if [ "$actual" != "$EXPECTED_SHA256" ]; then
+            echo "::error::The archive's SHA-256 ($actual) is not the one the build job reported ($EXPECTED_SHA256)."
+            exit 1
+          fi
+      # No --clobber: if a release for this tag exists, fail rather than replace files
+      # that installed extensions may already have downloaded.
+      - name: Create the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          gh release create "$TAG" \
+            "release/nashir-$VERSION.zip" \
+            "release/nashir-$VERSION.zip.sig" \
+            "release/SHA256SUMS" \
+            --verify-tag \
+            --title "Nashir $VERSION" \
+            --notes-file release-notes/release-notes.md

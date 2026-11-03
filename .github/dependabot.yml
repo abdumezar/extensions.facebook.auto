@@ -1,0 +1,31 @@
+version: 2
+
+updates:
+  # The pnpm workspace, read from the root: pnpm-workspace.yaml and the one lockfile.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    # A release published today is not proposed until it has had a week in the open.
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  # The actions in .github/workflows, which are pinned by commit SHA.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci(deps)"
+    groups:
+      actions:
+        patterns: ["*"]

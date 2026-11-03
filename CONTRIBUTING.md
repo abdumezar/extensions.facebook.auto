@@ -80,10 +80,23 @@ Never commit HAR files, screenshots of the Network tab, cookies, tokens, or any 
 
 Maintainers cut releases.
 
-1. Update `version` in `packages/extension/package.json` and move the `Unreleased` entries in `CHANGELOG.md` under the new version heading.
-2. Merge to `main`, then push a tag named `v` plus that version (for example `v1.0.0`). The tag must match the version in `packages/extension/package.json`.
-3. The release workflow builds the extension and packages it. Signing runs in the GitHub Environment `release` and waits for the repository owner's approval.
-4. After approval, the workflow publishes the GitHub Release with the zip, its signature and a checksum file.
+1. Update `version` in `packages/extension/package.json`. In `CHANGELOG.md`, move the `Unreleased` entries under a heading for the new version that carries the release date, for example `## [1.0.1] - 2026-12-01`.
+2. Merge to `main`. To rehearse first, run the **Release** workflow by hand from the Actions tab: it does everything except publish and does not check the tag.
+3. Push a tag named `v` plus that version (for example `v1.0.1`) on a commit that is on `main`. The workflow fails if the tag does not match the version in `packages/extension/package.json`, if the commit is not on `main`, or if the changelog heading has no date.
+4. The workflow tests, builds and packages the extension. Signing runs in the GitHub Environment `release` and waits for the repository owner's approval.
+5. After approval, the workflow publishes the GitHub Release with the zip, its signature and a checksum file, and uses the changelog section as the release notes.
+
+### Approving a release
+
+Whoever can push a tag controls the release workflow, because the workflow file is read from the tagged commit. The approval of the `release` environment is the safeguard, so do not approve on autopilot. Before you approve:
+
+1. The run was triggered by a tag push you made (or is a manual dry run on `main` that you started yourself — refuse a run started from any other ref), and its commit SHA equals the commit you reviewed on `main`.
+2. This diff is empty, or you have reviewed it: `git diff <previous tag>..<sha> -- .github/workflows packages/extension/scripts/sign-release.mjs packages/extension/src/update/releaseKeys.json pnpm-lock.yaml`.
+3. In the build job's log, the tag, on-`main`, release-build and pack checks passed, and the SHA-256 it printed for the zip equals the one the sign job checked.
+
+A manual run of the **Release** workflow also asks for approval and also signs, with the real signing secret. That is how a dry run proves the secret matches `releaseKeys.json`. It publishes nothing and keeps no signed files.
+
+In the repository settings, the `release` environment's deployment rules must allow the tag pattern `v*` and the branch `main`, and nothing else.
 
 ## Contribution terms
 
