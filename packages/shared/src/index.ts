@@ -15,6 +15,7 @@ export * from "./types/governor.js";
 
 // Facebook shape isolation
 export * from "./recipe/fbRecipe.js";
+export * from "./recipe/docIdOverrides.js";
 
 // Messaging contracts
 export * from "./messaging/messages.js";
