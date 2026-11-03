@@ -62,6 +62,11 @@ const ICONS = [
   "person",
   "open_in_new",
   "expand_more",
+  // Pagination
+  "first_page",
+  "last_page",
+  "chevron_left",
+  "chevron_right",
   "arrow_forward",
   "radio_button_unchecked",
   "select_all",

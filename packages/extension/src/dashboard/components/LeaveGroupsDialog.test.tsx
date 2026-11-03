@@ -1,7 +1,10 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { I18nextProvider } from "react-i18next";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import type { i18n } from "i18next";
 import type { Group, GroupLeavePreview } from "@nashir/shared";
+import { createTestI18n } from "../../test/i18n.js";
 import { LeaveGroupsDialog } from "./LeaveGroupsDialog.js";
 
 const previewLeaveGroup = vi.fn();
@@ -104,3 +107,50 @@ describe("LeaveGroupsDialog", () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 });
+
+describe("LeaveGroupsDialog batch scope", () => {
+  let i18n: i18n;
+  beforeAll(async () => {
+    i18n = await createTestI18n();
+  });
+
+  // Real English copy here, so the count itself can be asserted, not just the key.
+  function renderBatch(targets: Group[], hasOffPageTargets?: boolean) {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <LeaveGroupsDialog
+          accountId="acc"
+          targets={targets}
+          hasOffPageTargets={hasOffPageTargets}
+          onClose={vi.fn()}
+          onDone={vi.fn()}
+        />
+      </I18nextProvider>,
+    );
+  }
+
+  const MANY: Group[] = Array.from({ length: 1234 }, (_, i) => ({ id: String(5000 + i), name: `Group ${i}` }));
+
+  it("states the total number of groups being left", () => {
+    renderBatch(MANY);
+    expect(screen.getByText("1,234 groups in total will be left.")).toBeInTheDocument();
+  });
+
+  it("notes groups on other pages or hidden by the search when the selection has some", () => {
+    renderBatch(MANY, true);
+    expect(screen.getByText("This includes groups on other pages or hidden by your search.")).toBeInTheDocument();
+  });
+
+  it("stays quiet about other pages when everything selected is in view", () => {
+    renderBatch(MANY, false);
+    expect(screen.queryByText(/other pages/)).not.toBeInTheDocument();
+  });
+
+  it("adds neither line for a single group", () => {
+    previewLeaveGroup.mockResolvedValue(quietPreview());
+    renderBatch([OWN], true);
+    expect(screen.queryByText(/in total/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/other pages/)).not.toBeInTheDocument();
+  });
+});
+

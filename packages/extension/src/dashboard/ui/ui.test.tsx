@@ -182,6 +182,19 @@ describe("Checkbox", () => {
     await userEvent.click(screen.getByRole("checkbox", { name: "Pick" }));
     expect(onCheckedChange).not.toHaveBeenCalled();
   });
+
+  it("sets the native indeterminate state, and clears it again", () => {
+    const { rerender } = render(
+      <Checkbox checked={false} indeterminate onCheckedChange={() => {}} label="Page" />,
+    );
+    const box = screen.getByRole("checkbox", { name: "Page" }) as HTMLInputElement;
+    expect(box.indeterminate).toBe(true);
+    // Assistive tech reads the native property; a duplicate aria-checked would only compete.
+    expect(box).not.toHaveAttribute("aria-checked");
+
+    rerender(<Checkbox checked={false} onCheckedChange={() => {}} label="Page" />);
+    expect(box.indeterminate).toBe(false);
+  });
 });
 
 describe("FilterChip", () => {

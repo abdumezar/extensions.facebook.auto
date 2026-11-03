@@ -1,9 +1,15 @@
-import { useId } from "react";
+import { useEffect, useId, useRef } from "react";
 import { cn } from "./cn.js";
 import { Icon } from "./Icon.js";
 
 export interface CheckboxProps {
   checked: boolean;
+  /**
+   * "Some, not all": a header box over a partly selected list. Drawn as a dash and exposed
+   * through the native `indeterminate` property, which is what assistive tech reads. Only
+   * meaningful while `checked` is false; a click still reports a plain checked value.
+   */
+  indeterminate?: boolean;
   onCheckedChange: (checked: boolean) => void;
   label?: string;
   labelledBy?: string;
@@ -20,6 +26,7 @@ export interface CheckboxProps {
  */
 export function Checkbox({
   checked,
+  indeterminate = false,
   onCheckedChange,
   label,
   labelledBy,
@@ -27,6 +34,13 @@ export function Checkbox({
   className,
 }: CheckboxProps) {
   const id = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // `indeterminate` exists only as a DOM property — React has no attribute to set it from.
+  useEffect(() => {
+    if (inputRef.current) inputRef.current.indeterminate = indeterminate && !checked;
+  }, [indeterminate, checked]);
+  const mixed = indeterminate && !checked;
 
   return (
     <span
@@ -38,6 +52,7 @@ export function Checkbox({
       )}
     >
       <input
+        ref={inputRef}
         id={id}
         type="checkbox"
         checked={checked}
@@ -52,7 +67,7 @@ export function Checkbox({
         className={cn(
           "grid h-[18px] w-[18px] place-items-center rounded-[2px] border-2",
           "transition-colors duration-short2 ease-standard",
-          checked
+          checked || mixed
             ? "border-primary bg-primary text-on-primary"
             : "border-on-surface-variant text-transparent",
           disabled && "border-on-surface/[0.38] bg-transparent text-on-surface/[0.38]",
@@ -60,6 +75,7 @@ export function Checkbox({
         )}
       >
         {checked && <Icon name="check" size={14} />}
+        {mixed && <span className="h-0.5 w-2.5 rounded-full bg-current" />}
       </span>
     </span>
   );

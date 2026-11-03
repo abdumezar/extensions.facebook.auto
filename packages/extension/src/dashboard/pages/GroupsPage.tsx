@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { GroupDiscovery } from "../components/GroupDiscovery.js";
 import { useTranslation } from "react-i18next";
 import { CURRENT_SESSION, type Group, type GroupLeaveResult } from "@nashir/shared";
 import { loadCachedGroups, reloadGroups } from "../lib/data.js";
+import { formatNumber } from "../lib/format.js";
 import { LeaveGroupsDialog } from "../components/LeaveGroupsDialog.js";
 import { GroupsIncompleteNotice } from "../components/GroupsIncompleteNotice.js";
 import { useStore } from "../store.js";
@@ -12,14 +13,31 @@ import {
   Checkbox,
   Icon,
   IconButton,
+  Pagination,
   Select,
   Snackbar,
   StatusChip,
   TextField,
 } from "../ui/index.js";
 
+const PAGE_SIZES = [25, 50, 100] as const;
+const DEFAULT_PAGE_SIZE = 50;
+const PAGE_SIZE_KEY = "nashir:groups:pageSize";
+
+/** The remembered rows-per-page, or the default if it is missing, off the list, or unreadable. */
+function readPageSize(): number {
+  try {
+    const stored = Number(localStorage.getItem(PAGE_SIZE_KEY));
+    return PAGE_SIZES.some((n) => n === stored) ? stored : DEFAULT_PAGE_SIZE;
+  } catch {
+    return DEFAULT_PAGE_SIZE;
+  }
+}
+
 export function GroupsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const num = (n: number) => formatNumber(n, i18n.language);
+  const tableTop = useRef<HTMLDivElement>(null);
   const accounts = useStore((s) => s.accounts);
   const activeAccountId = useStore((s) => s.activeAccountId);
   const setActiveAccount = useStore((s) => s.setActiveAccount);
@@ -33,6 +51,8 @@ export function GroupsPage() {
 
   const [busy, setBusy] = useState(false);
   const [query, setQuery] = useState("");
+  const [pageState, setPageState] = useState(1);
+  const [pageSize, setPageSize] = useState(readPageSize);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   /** Groups awaiting confirmation to leave; null = the dialog is closed. */
@@ -45,6 +65,22 @@ export function GroupsPage() {
   }, [groups, query]);
 
   const allFilteredSelected = filtered.length > 0 && filtered.every((g) => selected.has(g.id));
+
+  // Clamped while rendering, not in an effect: a leave or a background batch can shrink the
+  // list under the reader, and this way there is never a frame with an empty page.
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const page = Math.min(Math.max(1, pageState), pageCount);
+  const pageRows = useMemo(
+    () => filtered.slice((page - 1) * pageSize, page * pageSize),
+    [filtered, page, pageSize],
+  );
+  const pageIds = useMemo(() => new Set(pageRows.map((g) => g.id)), [pageRows]);
+  const pageSelectedCount = pageRows.filter((g) => selected.has(g.id)).length;
+  const allPageSelected = pageRows.length > 0 && pageSelectedCount === pageRows.length;
+  const dir = document.documentElement.getAttribute("dir") === "rtl" ? "rtl" : "ltr";
+
+  // Another account is another list; its page 3 means nothing here.
+  useEffect(() => setPageState(1), [activeAccountId]);
 
   // While the service worker finishes a long list in the background, pick up each batch as it
   // lands. Cache reads only — this never reaches Facebook.
@@ -66,7 +102,7 @@ export function GroupsPage() {
     }
   }
 
-  /** Bulk-select what the current filter shows, so a search doubles as a selector. */
+  /** Bulk-select everything the current filter matches, on every page, so a search doubles as a selector. */
   function toggleAllFiltered() {
     const ids = new Set(selected);
     for (const g of filtered) {
@@ -74,6 +110,32 @@ export function GroupsPage() {
       else ids.add(g.id);
     }
     setSelectedGroups([...ids]);
+  }
+
+  /** The header box acts on this page only; selections made on other pages stay as they are. */
+  function toggleAllOnPage() {
+    const ids = new Set(selected);
+    for (const g of pageRows) {
+      if (allPageSelected) ids.delete(g.id);
+      else ids.add(g.id);
+    }
+    setSelectedGroups([...ids]);
+  }
+
+  /** A page change from the controls: the new rows start at the table's top, not mid-scroll. */
+  function goToPage(next: number) {
+    setPageState(next);
+    tableTop.current?.scrollIntoView?.({ block: "start" });
+  }
+
+  function changePageSize(size: number) {
+    setPageSize(size);
+    setPageState(1);
+    try {
+      localStorage.setItem(PAGE_SIZE_KEY, String(size));
+    } catch {
+      // Storage blocked: the choice simply lasts until the page closes.
+    }
   }
 
   return (
@@ -101,7 +163,10 @@ export function GroupsPage() {
             label={t("groups.search")}
             type="search"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPageState(1);
+            }}
             className="w-full sm:w-64"
           />
         </div>
@@ -118,7 +183,9 @@ export function GroupsPage() {
         </StatusChip>
         {filtered.length > 0 && (
           <Button variant="text" icon="select_all" onClick={toggleAllFiltered}>
-            {allFilteredSelected ? t("groups.deselectShown") : t("groups.selectShown", { n: filtered.length })}
+            {allFilteredSelected
+              ? t("groups.deselectMatching")
+              : t("groups.selectMatching", { n: num(filtered.length) })}
           </Button>
         )}
         {selected.size > 0 && (
@@ -154,70 +221,91 @@ export function GroupsPage() {
           </p>
         </Card>
       ) : (
-        <Card flush className="overflow-hidden">
-          <table className="w-full">
-            <caption className="sr-only">{t("groups.caption")}</caption>
-            <thead className="bg-surface-container text-on-surface-variant">
-              <tr className="text-label-medium">
-                <th scope="col" className="w-12 p-3 text-start">
-                  #
-                </th>
-                <th scope="col" className="w-14 p-3 text-start">
-                  <span className="sr-only">{t("dashboard.selected")}</span>
-                </th>
-                <th scope="col" className="p-3 text-start">
-                  {t("groups.title")}
-                </th>
-                <th scope="col" className="w-28 p-3 text-start">
-                  {t("groups.members")}
-                </th>
-                <th scope="col" className="w-16 p-3 text-start">
-                  <span className="sr-only">{t("groups.leaveColumn")}</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((g, i) => (
-                <tr
-                  key={g.id}
-                  className="border-t border-outline-variant transition-colors duration-short2 hover:bg-surface-container-low"
-                >
-                  <td className="p-3 text-body-small text-on-surface-variant">{i + 1}</td>
-                  <td className="p-1">
-                    <Checkbox
-                      checked={selected.has(g.id)}
-                      onCheckedChange={() => toggle(g.id)}
-                      label={g.name}
-                    />
-                  </td>
-                  {/* Row header: the group name is what identifies this row. */}
-                  <th scope="row" className="p-3 text-start font-normal">
-                    <bdi className="text-body-medium text-on-surface">{g.name}</bdi>
-                    <span className="block text-body-small text-on-surface-variant" dir="ltr">
-                      {g.id}
-                    </span>
+        <div ref={tableTop} className="scroll-mt-4">
+          <Card flush className="overflow-hidden">
+            <table className="w-full">
+              <caption className="sr-only">{t("groups.caption")}</caption>
+              <thead className="bg-surface-container text-on-surface-variant">
+                <tr className="text-label-medium">
+                  <th scope="col" className="w-12 p-3 text-start">
+                    #
                   </th>
-                  <td className="p-3 text-body-small text-on-surface-variant" dir="ltr">
-                    {g.memberCount != null ? g.memberCount.toLocaleString() : "—"}
-                  </td>
-                  <td className="p-1">
-                    <IconButton
-                      icon="logout"
-                      label={t("groups.leaveOne", { name: g.name })}
-                      onClick={() => setLeaveTargets([g])}
+                  <th scope="col" className="w-14 p-1 text-start">
+                    <Checkbox
+                      checked={allPageSelected}
+                      indeterminate={pageSelectedCount > 0 && !allPageSelected}
+                      onCheckedChange={toggleAllOnPage}
+                      label={t("groups.selectPage")}
                     />
-                  </td>
+                  </th>
+                  <th scope="col" className="p-3 text-start">
+                    {t("groups.title")}
+                  </th>
+                  <th scope="col" className="w-28 p-3 text-start">
+                    {t("groups.members")}
+                  </th>
+                  <th scope="col" className="w-16 p-3 text-start">
+                    <span className="sr-only">{t("groups.leaveColumn")}</span>
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
+              </thead>
+              <tbody>
+                {pageRows.map((g, i) => (
+                  <tr
+                    key={g.id}
+                    className="border-t border-outline-variant transition-colors duration-short2 hover:bg-surface-container-low"
+                  >
+                    <td className="p-3 text-body-small text-on-surface-variant">{num((page - 1) * pageSize + i + 1)}</td>
+                    <td className="p-1">
+                      <Checkbox
+                        checked={selected.has(g.id)}
+                        onCheckedChange={() => toggle(g.id)}
+                        label={g.name}
+                      />
+                    </td>
+                    {/* Row header: the group name is what identifies this row. */}
+                    <th scope="row" className="p-3 text-start font-normal">
+                      <bdi className="text-body-medium text-on-surface">{g.name}</bdi>
+                      <span className="block text-body-small text-on-surface-variant" dir="ltr">
+                        {g.id}
+                      </span>
+                    </th>
+                    <td className="p-3 text-body-small text-on-surface-variant" dir="ltr">
+                      {g.memberCount != null ? num(g.memberCount) : "—"}
+                    </td>
+                    <td className="p-1">
+                      <IconButton
+                        icon="logout"
+                        label={t("groups.leaveOne", { name: g.name })}
+                        onClick={() => setLeaveTargets([g])}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+        </div>
+      )}
+
+      {filtered.length > 0 && (
+        <Pagination
+          page={page}
+          pageCount={pageCount}
+          total={filtered.length}
+          pageSize={pageSize}
+          dir={dir}
+          onPageChange={goToPage}
+          pageSizeOptions={PAGE_SIZES}
+          onPageSizeChange={changePageSize}
+        />
       )}
 
       {leaveTargets && leaveTargets.length > 0 && (
         <LeaveGroupsDialog
           accountId={activeAccountId}
           targets={leaveTargets}
+          hasOffPageTargets={leaveTargets.some((g) => !pageIds.has(g.id))}
           onClose={() => setLeaveTargets(null)}
           onDone={(results) => setNotice(summarize(t, results))}
         />

@@ -8,6 +8,7 @@ export { IconButton, type IconButtonProps } from "./IconButton.js";
 export { LinearProgress } from "./LinearProgress.js";
 export { ListItem, type ListItemProps } from "./ListItem.js";
 export { SegmentedButton, type SegmentedOption } from "./SegmentedButton.js";
+export { Pagination, type PaginationProps } from "./Pagination.js";
 export { Select, type SelectProps } from "./Select.js";
 export { Snackbar, type SnackbarProps } from "./Snackbar.js";
 export { Switch, type SwitchProps } from "./Switch.js";

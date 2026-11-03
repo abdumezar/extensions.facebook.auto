@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Group, GroupLeavePreview, GroupLeaveResult } from "@nashir/shared";
+import { formatNumber } from "../lib/format.js";
 import { leaveGroups, previewLeaveGroup } from "../lib/data.js";
 import { Button, Dialog, Icon } from "../ui/index.js";
 
@@ -9,6 +10,12 @@ export interface LeaveGroupsDialogProps {
   accountId: string;
   /** Groups to leave. Exactly one gets Facebook's own warning copy fetched first. */
   targets: Group[];
+  /**
+   * True when some of `targets` are not on the page the user is looking at — on another
+   * page, or filtered out by the search. Without it a batch could quietly include groups
+   * the confirmation never showed on screen.
+   */
+  hasOffPageTargets?: boolean;
   onClose: () => void;
   /** Called once the batch finishes, with a per-group outcome. */
   onDone: (results: GroupLeaveResult[]) => void;
@@ -25,8 +32,14 @@ export interface LeaveGroupsDialogProps {
  * The confirm button stays disabled until that check resolves: confirming a delete the
  * user was never shown is the failure mode this whole component exists to prevent.
  */
-export function LeaveGroupsDialog({ accountId, targets, onClose, onDone }: LeaveGroupsDialogProps) {
-  const { t } = useTranslation();
+export function LeaveGroupsDialog({
+  accountId,
+  targets,
+  hasOffPageTargets = false,
+  onClose,
+  onDone,
+}: LeaveGroupsDialogProps) {
+  const { t, i18n } = useTranslation();
   const single = targets.length === 1 ? targets[0] : null;
 
   const [preview, setPreview] = useState<GroupLeavePreview | null>(null);
@@ -91,6 +104,9 @@ export function LeaveGroupsDialog({ accountId, targets, onClose, onDone }: Leave
           ? t("leave.body", { name: single.name })
           : t("leave.bodyMany", { n: targets.length })}
       </p>
+
+      {!single && <p className="mt-3 text-body-small">{t("leave.total", { n: formatNumber(targets.length, i18n.language) })}</p>}
+      {!single && hasOffPageTargets && <p className="mt-1 text-body-small">{t("leave.otherPages")}</p>}
 
       {!single && (
         <ul className="mt-3 max-h-40 space-y-1 overflow-y-auto text-body-small">

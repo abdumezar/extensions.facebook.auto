@@ -32,3 +32,15 @@ export function formatTimestamp(ts: number, language: string): string {
     return new Intl.DateTimeFormat(undefined, options).format(ts);
   }
 }
+
+/**
+ * A count with the language's digit grouping. Latin digits regardless of locale, like
+ * {@link formatTimestamp}, so every figure on a page reads the same in Arabic and English.
+ */
+export function formatNumber(value: number, language: string | undefined): string {
+  try {
+    return value.toLocaleString(language ? `${language}-u-nu-latn` : undefined);
+  } catch {
+    return value.toLocaleString();
+  }
+}
