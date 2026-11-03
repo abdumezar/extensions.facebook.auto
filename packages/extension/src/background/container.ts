@@ -31,6 +31,9 @@ import { DocIdStore } from "../engine/DocIdStore.js";
 import { DocIdHarvester } from "../engine/DocIdHarvester.js";
 import { UpdateService } from "../update/UpdateService.js";
 
+/** One of the manifest icons, so the build ships it. */
+export const LEAD_NOTIFICATION_ICON = "src/assets/icons/128.png";
+
 /** Where the service worker asks whether a newer release has been published. */
 const RELEASES_API_URL =
   "https://api.github.com/repos/abdumezar/extensions.facebook.auto/releases/latest";
@@ -153,7 +156,7 @@ export class Container {
       // used. This is what it was for.
       await chrome.notifications.create(`nashir:lead:${id}`, {
         type: "basic",
-        iconUrl: chrome.runtime.getURL("src/assets/icons/icon-128.png"),
+        iconUrl: chrome.runtime.getURL(LEAD_NOTIFICATION_ICON),
         title,
         message,
       });
