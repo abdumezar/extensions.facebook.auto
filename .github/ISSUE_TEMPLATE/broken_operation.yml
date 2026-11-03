@@ -1,0 +1,40 @@
+name: Broken operation
+description: A Facebook operation stopped working, for example after Facebook changed something
+labels: [broken-operation]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The Facebook operations Nashir uses are listed in the dashboard's **Facebook operations** card, and every call is counted in the **Facebook call budget** card on the Logs page.
+        Do not paste cookies, tokens, HAR files or other people's personal information. A new doc_id number on its own is fine.
+  - type: input
+    id: operation
+    attributes:
+      label: Operation name
+      description: Copy it exactly from the Facebook operations card.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Nashir version
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: textarea
+    id: failure
+    attributes:
+      label: What failed
+      description: What did you try, and what happened? Include the error shown in the dashboard and the Facebook call budget card on the Logs page if it shows a matched rule.
+    validations:
+      required: true
+  - type: input
+    id: since
+    attributes:
+      label: When did it start failing?
+      description: Did it work before, or has it never worked?
+  - type: input
+    id: doc-id
+    attributes:
+      label: New doc_id (optional)
+      description: If you already found the new number, paste only the number.
