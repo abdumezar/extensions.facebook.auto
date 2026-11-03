@@ -207,6 +207,12 @@ pnpm --filter @nashir/extension screenshots
 
 ## عن المطوّر
 
-ABOUT-PENDING
+**Abdulrhman Mezar**
+
+مهندس برمجيات متكامل (‎.NET وTypeScript). أصمّم الأنظمة وأبنيها وأطلقها كاملةً حتى الإنتاج، بواجهات عربية (من اليمين لليسار) وإنجليزية افتراضيًا.
+
+- GitHub: [github.com/abdumezar](https://github.com/abdumezar)
+- LinkedIn: [linkedin.com/in/abdumezar](https://linkedin.com/in/abdumezar)
+- البريد الإلكتروني: [abdumezar@gmail.com](mailto:abdumezar@gmail.com)
 
 </div>

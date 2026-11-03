@@ -174,4 +174,10 @@ Nashir is released under the [GNU General Public License v3.0](LICENSE) (GPL-3.0
 
 ## About the developer
 
-ABOUT-PENDING
+**Abdulrhman Mezar**
+
+Software engineer — full-stack .NET and TypeScript. I design, build and ship complete production systems, with Arabic (RTL) and English interfaces by default.
+
+- GitHub: [github.com/abdumezar](https://github.com/abdumezar)
+- LinkedIn: [linkedin.com/in/abdumezar](https://linkedin.com/in/abdumezar)
+- Email: [abdumezar@gmail.com](mailto:abdumezar@gmail.com)

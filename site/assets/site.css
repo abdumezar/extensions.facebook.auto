@@ -423,10 +423,6 @@ details[open] summary { color: rgb(var(--md-sys-color-primary)); }
 details > :not(summary) { color: rgb(var(--md-sys-color-on-surface-variant)); }
 details > p:last-child { padding-block-end: 0.5rem; }
 
-/* ===== Placeholder block (About) ======================================== */
-.pending { border: 2px dashed rgb(var(--md-sys-color-outline)); border-radius: var(--md-sys-shape-large); padding: 1.25rem 1.5rem; max-width: 40rem; }
-.pending p:last-child { margin-bottom: 0; }
-
 /* ===== Footer =========================================================== */
 .site-footer { background: rgb(var(--md-sys-color-surface-container-high)); padding-block: 2rem; font-size: 0.95rem; }
 .site-footer .wrap { display: grid; gap: 1rem; }
