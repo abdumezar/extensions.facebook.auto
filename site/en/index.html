@@ -31,6 +31,7 @@
       <nav class="site-nav" aria-label="Main">
         <ul>
           <li><a href="#features">Features</a></li>
+          <li><a href="#coming-soon">Coming soon</a></li>
           <li><a href="#install">Install</a></li>
           <li><a href="#updates">Updates</a></li>
           <li><a href="#safety">Safety and privacy</a></li>
@@ -73,7 +74,7 @@
     <section id="what" aria-labelledby="what-title">
       <div class="wrap">
         <h2 id="what-title">What it does</h2>
-        <p class="lead">You write a post once and choose the groups. Nashir publishes it group by group at a safe pace, tells you what worked in each, and stops when Facebook asks for a check or signals a limit. It also helps you find the right groups and the right people, without leaving the extension.</p>
+        <p class="lead">You write a post once and choose the groups. Nashir publishes it group by group at a safe pace, tells you what worked in each, and stops when Facebook asks for a check or signals a limit. It also helps you see who reacted to or commented on a post, without leaving the extension.</p>
       </div>
     </section>
 
@@ -86,12 +87,25 @@
           <article class="card"><h3>Multiple accounts</h3><p>Run campaigns from several of your own Facebook accounts.</p></article>
           <article class="card"><h3>Analytics</h3><p>See what you posted, where, and how it went over time.</p></article>
           <article class="card"><h3>Audience extraction</h3><p>Collect the people who reacted to or commented on a post, including phone numbers they wrote themselves in a comment, and export the list.</p></article>
-          <article class="card"><h3>Lead Radar</h3><p>Watch your groups for posts that look like someone wants to buy, and check them about every 15 minutes.</p></article>
-          <article class="card"><h3>Auto first comment</h3><p>Add your link or details as the first comment under a post, automatically.</p></article>
-          <article class="card"><h3>Group discovery and joining</h3><p>Find groups and join them in small batches: at most 8 a day, 3 per batch, with spacing between joins.</p></article>
+          <article class="card"><h3>Engagement loop</h3><p>Reads your own posts back, so you can see how they are doing. It is opt-in: turn it on in the Audience page.</p></article>
+          <article class="card"><h3>Leaving groups</h3><p>Leave groups you no longer need, one at a time or several at once, from the Groups page.</p></article>
           <article class="card"><h3>Facebook operations card</h3><p>Facebook renames its internal identifiers from time to time. Nashir re-learns them from Facebook's own pages and shows which ones are current.</p></article>
           <article class="card"><h3>Arabic first</h3><p>An Arabic interface by default, with English too, in light and dark themes.</p></article>
           <article class="card"><h3>Signed one-click updates</h3><p>New versions come from GitHub Releases and are checked against a signature before anything is installed.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="coming-soon" aria-labelledby="coming-soon-title">
+      <div class="wrap">
+        <h2 id="coming-soon-title">Coming soon</h2>
+        <p class="lead">These features are built into the extension, but each one waits on a Facebook operation that will be added in an upcoming update. The update arrives through the one-click update. Until then, the extension shows that they are not available yet and does nothing.</p>
+        <div class="grid">
+          <article class="card"><h3>Lead Radar</h3><p>Watches your groups for posts that look like buying intent.</p></article>
+          <article class="card"><h3>Auto first comment</h3><p>Adds your link or details as the first comment under a post, and lets Lead Radar reply.</p></article>
+          <article class="card"><h3>Group discovery and joining</h3><p>Finds groups and joins them in small, capped batches.</p></article>
+          <article class="card"><h3>Group member and page follower lists</h3><p>Extracts the members of a group and the followers of a page.</p></article>
+          <article class="card"><h3>Link preview in posts</h3><p>Shows Facebook's preview of a link before you post.</p></article>
         </div>
       </div>
     </section>
@@ -183,7 +197,7 @@
             <h3>Built to go slowly</h3>
             <ul class="plain">
               <li>Every call to Facebook passes through one governor with a call budget, pacing and cooldowns. Recent counts show on the Logs page.</li>
-              <li>Group joining is capped at 8 a day and 3 per batch, with spacing between joins.</li>
+              <li>Features have their own caps and spacing. Large group lists load in small resumable batches.</li>
               <li>When Facebook signals a limit, Nashir pauses and shows the rule that matched.</li>
               <li>When Facebook asks you to confirm it is you, Nashir stops all calls for that account until you finish the check.</li>
             </ul>
