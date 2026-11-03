@@ -4,6 +4,10 @@ All notable changes to Nashir are recorded here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+### Changed
+
+- Building from source now needs Node.js 22 or newer.
+
 ## [1.0.0] - 2026-11-03
 
 First public release.
