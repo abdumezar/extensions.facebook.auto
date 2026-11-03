@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-labelledby="t d">
+  <title id="t">Load unpacked</title>
+  <desc id="d">The Load unpacked button is highlighted on a browser extensions page, and a folder picker is choosing the Nashir folder.</desc>
+  <style>
+    text { font-family: Roboto, "Segoe UI", Arial, sans-serif; fill: #171d1a; }
+    .muted { fill: #44504a; }
+    .btn { fill: #ffffff; stroke: #6f7975; stroke-width: 2; }
+  </style>
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#005140" flood-opacity="0.18" />
+    </filter>
+    <symbol id="folder" viewBox="0 0 48 40">
+      <path d="M3 8a3 3 0 0 1 3-3h13l5 6h18a3 3 0 0 1 3 3v21a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3z" fill="#a3f2d8" stroke="#116b56" stroke-width="2" stroke-linejoin="round" />
+    </symbol>
+  </defs>
+
+  <rect width="800" height="500" fill="#f5fbf6" />
+  <circle cx="60" cy="470" r="140" fill="#cee9dd" opacity="0.55" />
+  <circle cx="760" cy="40" r="120" fill="#a3f2d8" opacity="0.4" />
+
+  <!-- a generic browser window -->
+  <g filter="url(#shadow)">
+    <rect x="50" y="40" width="700" height="420" rx="16" fill="#ffffff" stroke="#bfc9c3" stroke-width="2" />
+    <path d="M50 56a16 16 0 0 1 16-16h668a16 16 0 0 1 16 16v44H50z" fill="#e9efeb" />
+    <circle cx="80" cy="70" r="6" fill="#bfc9c3" />
+    <circle cx="100" cy="70" r="6" fill="#bfc9c3" />
+    <circle cx="120" cy="70" r="6" fill="#bfc9c3" />
+    <rect x="150" y="56" width="150" height="44" rx="12" fill="#ffffff" />
+    <text x="225" y="84" text-anchor="middle" font-size="16" font-weight="500">Extensions</text>
+    <rect x="70" y="106" width="660" height="30" rx="15" fill="#f5fbf6" stroke="#bfc9c3" stroke-width="1.5" />
+    <text x="92" y="127" font-size="15" class="muted">extensions</text>
+
+    <rect x="50" y="146" width="700" height="64" fill="#116b56" />
+    <text x="80" y="186" font-size="26" font-weight="500" style="fill:#ffffff">Extensions</text>
+
+    <!-- toolbar -->
+    <rect x="50" y="210" width="700" height="62" fill="#e9efeb" />
+    <rect class="btn" x="80" y="224" width="158" height="38" rx="19" />
+    <text x="159" y="249" text-anchor="middle" font-size="17" font-weight="500">Load unpacked</text>
+    <rect class="btn" x="254" y="224" width="158" height="38" rx="19" />
+    <text x="333" y="249" text-anchor="middle" font-size="17" font-weight="500">Pack extension</text>
+    <rect class="btn" x="428" y="224" width="100" height="38" rx="19" />
+    <text x="478" y="249" text-anchor="middle" font-size="17" font-weight="500">Update</text>
+
+    <!-- a card behind the picker, left as plain shapes -->
+    <rect x="80" y="298" width="250" height="140" rx="12" fill="#ffffff" stroke="#bfc9c3" stroke-width="2" />
+    <rect x="100" y="318" width="40" height="40" rx="10" fill="#cee9dd" />
+    <rect x="156" y="322" width="110" height="12" rx="6" fill="#bfc9c3" />
+    <rect x="156" y="344" width="80" height="10" rx="5" fill="#e9efeb" />
+    <rect x="100" y="380" width="210" height="10" rx="5" fill="#e9efeb" />
+    <rect x="100" y="400" width="160" height="10" rx="5" fill="#e9efeb" />
+  </g>
+
+  <!-- step 1: the highlighted button -->
+  <rect x="72" y="216" width="174" height="54" rx="27" fill="none" stroke="#f5a524" stroke-width="5" />
+  <circle cx="72" cy="216" r="15" fill="#f5a524" />
+  <text x="72" y="222" text-anchor="middle" font-size="17" font-weight="700" style="fill:#3a2400">1</text>
+
+  <!-- step 2: the folder picker -->
+  <g filter="url(#shadow)">
+    <rect x="376" y="292" width="340" height="164" rx="16" fill="#ffffff" stroke="#bfc9c3" stroke-width="2" />
+  </g>
+  <text x="400" y="324" font-size="19" font-weight="700">Select folder</text>
+  <rect x="392" y="336" width="308" height="36" rx="10" fill="#a3f2d8" stroke="#f5a524" stroke-width="4" />
+  <use href="#folder" x="404" y="342" width="28" height="24" />
+  <text x="444" y="361" font-size="18" font-weight="700" style="fill:#005140">Nashir</text>
+  <use href="#folder" x="404" y="380" width="28" height="24" opacity="0.5" />
+  <text x="444" y="399" font-size="18" class="muted">Photos</text>
+  <rect x="560" y="410" width="140" height="34" rx="17" fill="#116b56" />
+  <text x="630" y="433" text-anchor="middle" font-size="16" font-weight="500" style="fill:#ffffff">Select folder</text>
+  <circle cx="376" cy="292" r="15" fill="#f5a524" />
+  <text x="376" y="298" text-anchor="middle" font-size="17" font-weight="700" style="fill:#3a2400">2</text>
+</svg>

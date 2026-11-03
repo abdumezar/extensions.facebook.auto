@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "gen:tokens": "vite-node -c scripts/vite-node.config.ts scripts/write-tokens.ts",
-    "pack:ext": "node scripts/pack.mjs"
+    "pack:ext": "node scripts/pack.mjs",
+    "screenshots": "node scripts/screenshots/capture.mjs"
   },
   "dependencies": {
     "@nashir/shared": "workspace:*",

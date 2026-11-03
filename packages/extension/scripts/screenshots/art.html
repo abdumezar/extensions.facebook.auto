@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Nashir — illustration frame</title>
+    <style>
+      /* Shows one of illustrations/*.svg at the size of the window: ?svg=<file name>. */
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #ffffff;
+      }
+      #art svg {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="art"></div>
+    <script type="module">
+      // The SVG is placed in the page, not loaded as an image, so it uses the page's
+      // bundled fonts and the files stay plain, standalone SVG.
+      import "/src/assets/fonts/fonts.css";
+      import { fontsLoaded } from "/scripts/screenshots/fonts.js";
+      const name = new URLSearchParams(window.location.search).get("svg") ?? "";
+      if (!/^[a-z-]+$/.test(name)) throw new Error("Pass ?svg=<illustration name>");
+      const response = await fetch(`/scripts/screenshots/illustrations/${name}.svg`);
+      if (!response.ok) throw new Error(`No illustration named ${name}`);
+      document.getElementById("art").innerHTML = await response.text();
+      await fontsLoaded();
+      document.documentElement.dataset.ready = "1";
+    </script>
+  </body>
+</html>

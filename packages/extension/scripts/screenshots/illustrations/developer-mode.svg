@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-labelledby="t d">
+  <title id="t">Turn on Developer mode</title>
+  <desc id="d">A browser extensions page with the Developer mode switch highlighted.</desc>
+  <style>
+    text { font-family: Roboto, "Segoe UI", Arial, sans-serif; fill: #171d1a; }
+    .muted { fill: #44504a; }
+  </style>
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#005140" flood-opacity="0.16" />
+    </filter>
+  </defs>
+
+  <rect width="800" height="500" fill="#f5fbf6" />
+  <circle cx="60" cy="470" r="140" fill="#cee9dd" opacity="0.55" />
+  <circle cx="760" cy="40" r="120" fill="#a3f2d8" opacity="0.4" />
+
+  <!-- a generic browser window -->
+  <g filter="url(#shadow)">
+    <rect x="50" y="40" width="700" height="420" rx="16" fill="#ffffff" stroke="#bfc9c3" stroke-width="2" />
+    <path d="M50 56a16 16 0 0 1 16-16h668a16 16 0 0 1 16 16v44H50z" fill="#e9efeb" />
+    <circle cx="80" cy="70" r="6" fill="#bfc9c3" />
+    <circle cx="100" cy="70" r="6" fill="#bfc9c3" />
+    <circle cx="120" cy="70" r="6" fill="#bfc9c3" />
+    <rect x="150" y="56" width="150" height="44" rx="12" fill="#ffffff" />
+    <text x="225" y="84" text-anchor="middle" font-size="16" font-weight="500">Extensions</text>
+    <rect x="70" y="106" width="660" height="30" rx="15" fill="#f5fbf6" stroke="#bfc9c3" stroke-width="1.5" />
+    <text x="92" y="127" font-size="15" class="muted">extensions</text>
+
+    <!-- page header -->
+    <rect x="50" y="146" width="700" height="64" fill="#116b56" />
+    <text x="80" y="186" font-size="26" font-weight="500" style="fill:#ffffff">Extensions</text>
+
+    <!-- extension cards, left as plain shapes and kept clear of the callout -->
+    <g transform="translate(0 44)">
+    <rect x="80" y="244" width="300" height="150" rx="12" fill="#ffffff" stroke="#bfc9c3" stroke-width="2" />
+    <rect x="100" y="264" width="40" height="40" rx="10" fill="#cee9dd" />
+    <rect x="156" y="268" width="130" height="12" rx="6" fill="#bfc9c3" />
+    <rect x="156" y="290" width="90" height="10" rx="5" fill="#e9efeb" />
+    <rect x="100" y="326" width="260" height="10" rx="5" fill="#e9efeb" />
+    <rect x="100" y="346" width="200" height="10" rx="5" fill="#e9efeb" />
+    <rect x="420" y="244" width="300" height="150" rx="12" fill="#ffffff" stroke="#bfc9c3" stroke-width="2" />
+    <rect x="440" y="264" width="40" height="40" rx="10" fill="#cee9dd" />
+    <rect x="496" y="268" width="130" height="12" rx="6" fill="#bfc9c3" />
+    <rect x="496" y="290" width="90" height="10" rx="5" fill="#e9efeb" />
+    <rect x="440" y="326" width="260" height="10" rx="5" fill="#e9efeb" />
+    <rect x="440" y="346" width="200" height="10" rx="5" fill="#e9efeb" />
+    </g>
+  </g>
+
+  <!-- the highlighted switch -->
+  <text x="520" y="186" font-size="19" font-weight="500" style="fill:#ffffff">Developer mode</text>
+  <rect x="662" y="162" width="56" height="32" rx="16" fill="#a3f2d8" />
+  <circle cx="702" cy="178" r="12" fill="#116b56" />
+  <rect x="504" y="152" width="230" height="52" rx="26" fill="none" stroke="#f5a524" stroke-width="5" />
+
+  <!-- callout -->
+  <path d="M690 214l-10 14h20z" fill="#f5a524" />
+  <rect x="540" y="226" width="196" height="42" rx="21" fill="#f5a524" />
+  <text x="638" y="254" text-anchor="middle" font-size="20" font-weight="700" style="fill:#3a2400">Turn this on</text>
+</svg>
