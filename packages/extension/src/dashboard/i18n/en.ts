@@ -230,6 +230,25 @@ export const en = {
     lastMinute: "Last minute",
     matched: "Matched rule",
   },
+  docIds: {
+    title: "Facebook operations",
+    intro:
+      "Facebook renames the internal ids behind these actions from time to time. The extension learns the new ones while you browse Facebook.",
+    operation: "Operation",
+    active: "Active id",
+    source: "Source",
+    lastSeen: "Last seen",
+    source_bundled: "Built in",
+    source_learned: "Learned",
+    notLearned: "Not learned yet",
+    hint_feed: "Open Facebook's home page once.",
+    hint_groups: "Open your groups page on Facebook once.",
+    hint_composer: "Open the post box in any group once.",
+    hint_comments: "Open the comments of any Facebook post once.",
+    hint_reactions: "Open the reactions list of any Facebook post once.",
+    hint_leave:
+      "Open any group's Leave confirmation dialog once, then close it without confirming.",
+  },
   throttle: {
     title: "Facebook asked us to slow down",
     heldForYou: "Your queue is untouched — {{remaining}} still to post.",

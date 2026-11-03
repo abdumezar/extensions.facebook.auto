@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { GovernorSnapshot } from "@nashir/shared";
+import type { DocIdRow, GovernorSnapshot } from "@nashir/shared";
 import { call } from "../lib/rpc.js";
+import { loadDocIds } from "../lib/data.js";
+import { DocIdStatusCard } from "../components/DocIdStatusCard.js";
 import { GovernorCard } from "../components/GovernorCard.js";
 import { Button, Card } from "../ui/index.js";
 
@@ -22,6 +24,7 @@ export function LogsPage() {
   const { t } = useTranslation();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [governor, setGovernor] = useState<GovernorSnapshot | null>(null);
+  const [docIds, setDocIds] = useState<DocIdRow[]>([]);
   const [now, setNow] = useState(() => Date.now());
 
   async function load() {
@@ -36,6 +39,31 @@ export function LogsPage() {
     };
     chrome.storage.onChanged.addListener(listener);
     return () => chrome.storage.onChanged.removeListener(listener);
+  }, []);
+
+  // Learned ids land in storage when a Facebook tab is harvested, which can happen while
+  // this page is open — so follow the key instead of reading once.
+  useEffect(() => {
+    let cancelled = false;
+    let latest = 0;
+    const refresh = () => {
+      const mine = ++latest;
+      void loadDocIds().then((rows) => {
+        // A failed read keeps what is already shown; a reply that was overtaken by a
+        // newer read, or that arrives after unmount, is dropped.
+        if (cancelled || mine !== latest || rows === null) return;
+        setDocIds(rows);
+      });
+    };
+    refresh();
+    const listener = (changes: Record<string, chrome.storage.StorageChange>) => {
+      if (changes["nashir:docIds"]) refresh();
+    };
+    chrome.storage.onChanged.addListener(listener);
+    return () => {
+      cancelled = true;
+      chrome.storage.onChanged.removeListener(listener);
+    };
   }, []);
 
   // The budget is only interesting while it is moving, so this ticks rather than
@@ -58,6 +86,7 @@ export function LogsPage() {
   return (
     <div className="space-y-4">
       {governor && <GovernorCard snap={governor} now={now} />}
+      {docIds.length > 0 && <DocIdStatusCard rows={docIds} />}
 
       <div className="flex items-center justify-end">
         <Button variant="text" icon="delete" onClick={() => void clear()}>

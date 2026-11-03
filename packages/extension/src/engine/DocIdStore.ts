@@ -3,6 +3,7 @@ import {
   bundledDocIds,
   type DocIdOverride,
   type DocIdOverrides,
+  type DocIdRow,
   type FbRecipe,
 } from "@nashir/shared";
 import type { LoggerPort, StoragePort } from "./ports/index.js";
@@ -10,13 +11,6 @@ import type { LoggerPort, StoragePort } from "./ports/index.js";
 const KEY = "nashir:docIds";
 
 export type DocIdChange = { name: string; from: string; to: string };
-
-export type DocIdRow = {
-  name: string;
-  active: string;
-  source: "bundled" | "learned";
-  seenAt?: number;
-};
 
 function isOverride(value: unknown): value is DocIdOverride {
   if (typeof value !== "object" || value === null) return false;

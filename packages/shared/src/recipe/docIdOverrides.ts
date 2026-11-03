@@ -20,6 +20,15 @@ export type DocIdOverride = {
 /** friendlyName -> override. */
 export type DocIdOverrides = Record<string, DocIdOverride>;
 
+/** One operation as `GET_DOC_IDS` reports it: the id in force and where it came from. */
+export type DocIdRow = {
+  name: string;
+  active: string;
+  source: "bundled" | "learned";
+  /** When the id was last seen on Facebook; only present for a learned id. */
+  seenAt?: number;
+};
+
 const DOC_ID_PATTERN = /^\d{5,25}$/;
 
 type QueryNode = { docId: string; friendlyName: string };

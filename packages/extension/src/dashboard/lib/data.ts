@@ -1,6 +1,7 @@
 import {
   CURRENT_SESSION,
   type Account,
+  type DocIdRow,
   type Group,
   type GroupCache,
   type GroupLeavePreview,
@@ -32,6 +33,18 @@ export async function loadSession(): Promise<SessionStatus | null> {
   const session = res.ok && res.data ? res.data : null;
   useStore.getState().setSession(session);
   return session;
+}
+
+/**
+ * Which id each Facebook operation currently uses. Read-only and not kept in the
+ * store: only the Logs page shows it, and it needs no network access at all.
+ *
+ * `null` means the question failed (the service worker may be cold-starting), which
+ * is not the same answer as an empty list — a caller holding good rows keeps them.
+ */
+export async function loadDocIds(): Promise<DocIdRow[] | null> {
+  const res = await rpc<DocIdRow[]>({ type: "GET_DOC_IDS" });
+  return res.ok && res.data ? res.data : null;
 }
 
 /**
