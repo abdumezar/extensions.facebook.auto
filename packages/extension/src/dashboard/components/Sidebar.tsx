@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { useStore, type ViewId } from "../store.js";
 import { Icon, type IconName, cn } from "../ui/index.js";
 import logoMark from "../../assets/logos/logo.png";
+import { appVersion } from "../appVersion.js";
 
 const ITEMS: { id: ViewId; icon: IconName; key: string }[] = [
   { id: "dashboard", icon: "home", key: "nav.dashboard" },
@@ -30,6 +31,7 @@ export function Sidebar() {
   const { t } = useTranslation();
   const view = useStore((s) => s.view);
   const setView = useStore((s) => s.setView);
+  const version = appVersion();
 
   return (
     <aside className="flex w-20 shrink-0 flex-col bg-surface-container-low p-2 lg:w-[280px] lg:p-3">
@@ -72,9 +74,9 @@ export function Sidebar() {
       </nav>
 
       <div className="mt-auto px-2 py-3 text-center text-body-small text-on-surface-variant lg:px-4 lg:text-start">
-        <span className="hidden lg:inline">{t("app.version", { version: "0.1.0" })}</span>
+        <span className="hidden lg:inline">{t("app.version", { version })}</span>
         <span className="lg:hidden" dir="ltr">
-          v0.1.0
+          v{version}
         </span>
       </div>
     </aside>
