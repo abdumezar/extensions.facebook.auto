@@ -242,7 +242,7 @@ export class AudienceService {
       }
     } catch (err) {
       // The governor refused, or Facebook did. Everything already written stays —
-      // the pages are paid for, and discarding them would spend the budget twice to
+      // the pages are already fetched, and discarding them would spend the budget twice to
       // arrive back here. `GroupService` learned this the same way.
       const message = err instanceof Error ? err.message : String(err);
       this.logger.warn("Extraction stopped early", {

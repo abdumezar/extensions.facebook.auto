@@ -237,7 +237,7 @@ describe("CallGovernor cooldowns", () => {
 describe("CallGovernor survives service worker eviction", () => {
   /**
    * The property the whole design turns on. An in-memory limiter is a limiter that is
-   * always empty, because MV3 kills the service worker every ~30 seconds. A second governor
+   * always empty, because MV3 stops the service worker every ~30 seconds. A second governor
    * over the same storage is that death, in a test.
    */
   it("a cooldown taken by one service worker generation still binds the next", async () => {

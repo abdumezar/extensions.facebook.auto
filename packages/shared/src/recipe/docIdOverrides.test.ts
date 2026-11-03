@@ -61,7 +61,7 @@ describe("applyDocIdOverrides", () => {
     expect(next.postAudience!.reactions.friendlyName).toBe(REACTIONS);
   });
 
-  it("replaces a reference-only node too", () => {
+  it("replaces the reactionsFirst node too", () => {
     const bundled = bundledDocIds(DEFAULT_FB_RECIPE);
     const next = applyDocIdOverrides(DEFAULT_FB_RECIPE, {
       [REACTIONS_FIRST]: override("28949165141359436", bundled[REACTIONS_FIRST]!),

@@ -58,8 +58,8 @@ export class Container {
     this.crypto,
     this.tab,
     this.logger,
-    // Lazy on purpose: `governor` is declared below, and a class field cannot forward-
-    // reference one. The scrape happens long after construction, so this is safe.
+    // Lazy on purpose: `governor` is declared below, and a class field cannot read a field
+    // declared after it. The scrape happens long after construction, so this is safe.
     { acquire: (d, c, a) => this.governor.acquire(d, c, a) },
   );
 

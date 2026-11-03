@@ -171,9 +171,9 @@ export class GroupService {
       try {
         next = await this.fetchPage(pag!, { ...base, count: 100, cursor }, tokens, endpoint);
       } catch (err) {
-        // The governor refused mid-walk. Keep the pages already paid for and the cursor
+        // The governor refused mid-walk. Keep the pages already fetched and the cursor
         // that was about to be spent, so the next batch starts exactly here rather than
-        // paying for all of them again to end up in the same place.
+        // spending calls on all of them again to end up in the same place.
         this.logger.warn("Group pagination stopped early", {
           accountId,
           requests,

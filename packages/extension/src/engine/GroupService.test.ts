@@ -412,7 +412,7 @@ describe("GroupService staleness cannot get stuck", () => {
   });
 });
 
-describe("GroupService keeps what it has already paid for", () => {
+describe("GroupService keeps what it has already fetched", () => {
   /** An HttpPort that serves N pages and then refuses, as the governor would. */
   function refusingAfter(bodies: string[], n: number): HttpPort {
     let i = 0;
@@ -435,7 +435,7 @@ describe("GroupService keeps what it has already paid for", () => {
 
     const groups = await gs.loadJoinedGroups("acc1", tokens, DEFAULT_FB_RECIPE, { refresh: true });
 
-    // Two pages landed before the refusal; throwing them away would mean paying for
+    // Two pages landed before the refusal; throwing them away would mean spending calls on
     // them again next time to reach the same place.
     expect(groups.map((g) => g.id).sort()).toEqual(["111111", "222222"]);
     expect((await gs.getGroups("acc1")).map((g) => g.id).sort()).toEqual(["111111", "222222"]);

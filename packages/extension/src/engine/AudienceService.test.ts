@@ -298,7 +298,7 @@ describe("extract", () => {
     expect(state.truncated).toBe(true);
   });
 
-  it("keeps the pages already paid for when the governor refuses mid-walk", async () => {
+  it("keeps the pages already fetched when the governor refuses mid-walk", async () => {
     let n = 0;
     const { svc } = build((friendly) => {
       if (!friendly.includes("Reactions")) return { data: {} };
