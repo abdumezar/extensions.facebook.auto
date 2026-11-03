@@ -1,3 +1,4 @@
+import { generateKeyPairSync, sign } from "node:crypto";
 import { describe, it, expect } from "vitest";
 import * as ed from "@noble/ed25519";
 import { verifyReleaseSignature } from "./verify.js";
@@ -7,7 +8,7 @@ const toBase64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes));
 const zip = new TextEncoder().encode("pretend this is a release archive");
 
 async function makeKeyPair() {
-  const secret = ed.utils.randomPrivateKey();
+  const secret = ed.utils.randomSecretKey();
   const publicKey = await ed.getPublicKeyAsync(secret);
   return { secret, publicB64: toBase64(publicKey) };
 }
@@ -17,6 +18,17 @@ describe("verifyReleaseSignature", () => {
     const { secret, publicB64 } = await makeKeyPair();
     const sig = toBase64(await ed.signAsync(zip, secret));
     expect(await verifyReleaseSignature(zip, sig, [publicB64])).toBe(true);
+  });
+
+  it("accepts a signature made by node:crypto, as scripts/sign-release.mjs makes it", async () => {
+    const { publicKey, privateKey } = generateKeyPairSync("ed25519");
+    const rawB64 = (publicKey.export({ type: "spki", format: "der" }) as Buffer).subarray(-32).toString("base64");
+    const sig = sign(null, zip, privateKey).toString("base64");
+    expect(await verifyReleaseSignature(zip, sig, [rawB64])).toBe(true);
+
+    const tampered = zip.slice();
+    tampered[0] = tampered[0]! ^ 1;
+    expect(await verifyReleaseSignature(tampered, sig, [rawB64])).toBe(false);
   });
 
   it("second listed key verifies", async () => {

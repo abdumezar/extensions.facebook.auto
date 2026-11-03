@@ -14,7 +14,7 @@ const ZIP_URL = "https://downloads.test/nashir-1.0.1.zip";
 const SIG_URL = "https://downloads.test/nashir-1.0.1.zip.sig";
 const KEY = "pinned-extension-key";
 
-const secret = ed.utils.randomPrivateKey();
+const secret = ed.utils.randomSecretKey();
 const publicB64 = toBase64(await ed.getPublicKeyAsync(secret));
 
 /** A release archive as the packer writes it: the entries plus a manifest and a file list. */
@@ -289,7 +289,7 @@ describe("runSelfUpdate", () => {
 
   it("bad signature never touches the folder", async () => {
     const zip = releaseZip({ "app.js": "tampered" });
-    const stranger = ed.utils.randomPrivateKey();
+    const stranger = ed.utils.randomSecretKey();
     const h = await harness({ zip, sig: sign(zip, stranger) });
 
     expect(await runSelfUpdate(available(), h.deps)).toEqual({ error: "bad_signature" });
