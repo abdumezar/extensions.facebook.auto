@@ -23,6 +23,8 @@ export const UiRequestSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("GET_UPDATE_STATE") }),
   /** Ask GitHub Releases now and return the fresh result. */
   z.object({ type: z.literal("CHECK_FOR_UPDATE") }),
+  /** Whether a campaign, rate ramp, Lead Radar sweep or engagement read is active right now. */
+  z.object({ type: z.literal("GET_BUSY_STATE") }),
 
   // Live browser session (no cookie swap): who is logged into Facebook right now.
   z.object({ type: z.literal("GET_SESSION_STATUS") }),

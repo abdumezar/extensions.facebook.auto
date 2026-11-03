@@ -1,5 +1,7 @@
 import { defineManifest } from "@crxjs/vite-plugin";
 import pkg from "./package.json";
+import { e2eManifest } from "./scripts/lib/e2eBuild.js";
+import { EXTENSION_KEY } from "./src/update/extensionKey.js";
 
 /**
  * MV3 manifest. Permissions are kept deliberately minimal:
@@ -22,7 +24,7 @@ const common = {
   description:
     "ناشِر — انشر إلى مجموعات فيسبوك المتعددة بأمان. Arabic-first bulk poster for Facebook groups.",
   version: pkg.version,
-  key: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAhFnPjvRdfhaFa7wBPsg19OwHJSIBWhTlBiYDBptcTYI9OYnr9vxPpo+v+Zuw2r9PXGrNobzb1Ad66S4VgUXAfkyjZBAqLoEqpW2GXE+50flOU26Fr6WUCDFxL8xiJKQA2BeA2Bqsj/xjVmGMQFY7/VDqlVp4AMXKkOz5nYisLQZ/iskSSymNP1PvgreCIXB0wNpaEvAW/a5tQoD6XooxEBWvZZLa/NWvCc4U6KdCgXyQ/gd9QK7bNLir2hJHnPN5m2TfNvWhA6NXzf+Glc1eXVv6C4x1sblBlffTeISXGt/iDFJMq8tbpdbE6bCEthbgubHEWd/HEDYvDC87x911iwIDAQAB",
+  key: EXTENSION_KEY,
   minimum_chrome_version: "116",
 
   icons: {
@@ -84,5 +86,10 @@ export default defineManifest({
   content_scripts: contentScriptMatches.map((script) => ({ ...script, js: [CONTENT_SCRIPT_ENTRY] })),
 });
 
-/** The build's manifest: no content script, because the build adds the one it makes itself. */
-export const buildManifest = defineManifest(common);
+/**
+ * The build's manifest: no content script, because the build adds the one it makes itself.
+ * Only `--mode e2e` changes anything else (see scripts/lib/e2eBuild.ts).
+ */
+export const buildManifest = defineManifest(({ mode }) =>
+  mode === "e2e" ? e2eManifest(common, process.env) : common,
+);

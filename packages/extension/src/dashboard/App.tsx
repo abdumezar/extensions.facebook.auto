@@ -6,6 +6,7 @@ import { Sidebar } from "./components/Sidebar.js";
 import { Topbar } from "./components/Topbar.js";
 import { RunBar } from "./components/RunBar.js";
 import { CheckpointBanner } from "./components/CheckpointBanner.js";
+import { UpdateBanner } from "./components/UpdateBanner.js";
 import { ErrorBoundary } from "./components/ErrorBoundary.js";
 import { DashboardPage } from "./pages/DashboardPage.js";
 import { Card } from "./ui/index.js";
@@ -67,6 +68,8 @@ export function App() {
             exactly where a blocked group load sends you.
           */}
           <CheckpointBanner />
+          {/* A new release, or the page opened right after one was installed. */}
+          <UpdateBanner />
           {/* resetKey clears a caught error as soon as the user navigates away. */}
           <ErrorBoundary resetKey={view}>
             <Suspense fallback={<ViewFallback />}>{renderView(view)}</Suspense>

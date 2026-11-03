@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { UpdatesSection } from "../components/UpdatesSection.js";
 import { useStore } from "../store.js";
 import { Button, Card } from "../ui/index.js";
 
@@ -8,6 +9,8 @@ export function SettingsPage() {
 
   return (
     <div className="max-w-2xl space-y-4">
+      <UpdatesSection />
+
       {/*
         The only door into the feasibility gate. It stays out of the sidebar because it
         posts to real groups — an operator tool, not something to wander into.

@@ -15,7 +15,9 @@ export const CHECK_TIMEOUT_MS = 15_000;
 /** Longest a rate-limit reset time is believed; a bogus header must not mute checks for days. */
 const MAX_RATE_LIMIT_WAIT_MS = 2 * 60 * 60 * 1000;
 
-const STORAGE_KEY = "nashir:update";
+/** Where the last result is kept; pages listen for changes to it. */
+export const UPDATE_STORAGE_KEY = "nashir:update";
+const STORAGE_KEY = UPDATE_STORAGE_KEY;
 const META_KEY = "nashir:update:meta";
 const PLAIN_VERSION = /^\d+\.\d+\.\d+$/;
 const GITHUB_API_HOST = "api.github.com";

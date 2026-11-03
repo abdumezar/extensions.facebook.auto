@@ -8,6 +8,7 @@ import {
 import { container } from "./container.js";
 import { openOrFocusDashboard } from "./singleInstance.js";
 import { FacebookClient } from "../engine/FacebookClient.js";
+import { busyState } from "./activity.js";
 import { toCsv, toJson, toPhoneCsv } from "../engine/audienceExport.js";
 
 /** Which of the usual causes a failed session bootstrap looks like, for the log. */
@@ -44,6 +45,16 @@ export async function handleUiRequest(raw: unknown): Promise<UiResponse> {
 
       case "CHECK_FOR_UPDATE":
         return { ok: true, data: await c.updates.check({ manual: true }) };
+
+      case "GET_BUSY_STATE":
+        return {
+          ok: true,
+          data: await busyState({
+            run: () => c.engine.getState(),
+            ramp: async () => (await c.feasibility.get()).ramp,
+            tracker: c.activity,
+          }),
+        };
 
       // ---- Live session ----
       case "GET_SESSION_STATUS":
@@ -160,10 +171,12 @@ export async function handleUiRequest(raw: unknown): Promise<UiResponse> {
 
       case "LEAVE_GROUPS": {
         const recipe = await c.getRecipe();
-        const results = await withAccountTokens(c, req.accountId, (tokens) =>
-          c.groupLeave.leaveMany(req.accountId, req.groupIds, tokens, recipe, {
-            spacingMs: req.spacingSeconds != null ? req.spacingSeconds * 1000 : undefined,
-          }),
+        const results = await c.activity.track("groups", () =>
+          withAccountTokens(c, req.accountId, (tokens) =>
+            c.groupLeave.leaveMany(req.accountId, req.groupIds, tokens, recipe, {
+              spacingMs: req.spacingSeconds != null ? req.spacingSeconds * 1000 : undefined,
+            }),
+          ),
         );
         // A partial failure is still a result worth showing per group, so this stays ok.
         return { ok: true, data: results };
@@ -318,12 +331,14 @@ export async function handleUiRequest(raw: unknown): Promise<UiResponse> {
         // closing; the page polls GET_EXTRACTION_STATE. Awaiting here would make a
         // closed dashboard strand the run — the mistake the feasibility ramp exists
         // to demonstrate the fix for.
-        void c.audience
-          .extract(req.postUrl, tokens, recipe, {
-            ...(req.defaultRegion ? { defaultRegion: req.defaultRegion as never } : {}),
-            ...(req.skipReactors !== undefined ? { skipReactors: req.skipReactors } : {}),
-            ...(req.skipComments !== undefined ? { skipComments: req.skipComments } : {}),
-          })
+        void c.activity
+          .track("extraction", () =>
+            c.audience.extract(req.postUrl, tokens, recipe, {
+              ...(req.defaultRegion ? { defaultRegion: req.defaultRegion as never } : {}),
+              ...(req.skipReactors !== undefined ? { skipReactors: req.skipReactors } : {}),
+              ...(req.skipComments !== undefined ? { skipComments: req.skipComments } : {}),
+            }),
+          )
           .catch((err) => c.logger.error("Extraction failed", { error: String(err) }));
         return { ok: true, data: await c.audience.state() };
       }
@@ -459,7 +474,8 @@ export async function handleUiRequest(raw: unknown): Promise<UiResponse> {
       case "JOIN_GROUPS": {
         const tokens = await c.scraper.scrapeFromOpenTab();
         if (!tokens) return { ok: false, error: "Open a Facebook tab first." };
-        return { ok: true, data: await c.joins.join(req.groupIds, tokens, await c.getRecipe()) };
+        const recipe = await c.getRecipe();
+        return { ok: true, data: await c.activity.track("groups", () => c.joins.join(req.groupIds, tokens, recipe)) };
       }
 
       case "GET_JOIN_BUDGET":
@@ -477,8 +493,8 @@ export async function handleUiRequest(raw: unknown): Promise<UiResponse> {
         const tokens = await c.scraper.scrapeFromOpenTab();
         if (!tokens) return { ok: false, error: "Open a Facebook tab first." };
         const recipe = await c.getRecipe();
-        void c.audience
-          .extractRoster(req.kind, req.targetId, tokens, recipe)
+        void c.activity
+          .track("extraction", () => c.audience.extractRoster(req.kind, req.targetId, tokens, recipe))
           .catch((err) => c.logger.error("Roster extraction failed", { error: String(err) }));
         return { ok: true, data: await c.audience.state() };
       }

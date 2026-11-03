@@ -11,6 +11,8 @@ import { isFacebookPage } from "../engine/DocIdHarvester.js";
 import { measuredDefaults } from "../engine/feasibilityMath.js";
 import { ALARM_UPDATE_CHECK, UPDATE_CHECK_PERIOD_MINUTES } from "../update/UpdateService.js";
 import { shouldAnnounceUpdate } from "../update/announce.js";
+import { e2eBuild } from "../update/e2e.js";
+import { rearmFeatureAlarms } from "./rearm.js";
 import { injectContentScriptIntoTabs } from "../platform/ChromeTabs.js";
 
 /**
@@ -20,6 +22,9 @@ import { injectContentScriptIntoTabs } from "../platform/ChromeTabs.js";
  */
 
 async function bootstrap(): Promise<void> {
+  if (e2eBuild) {
+    container().logger.warn("End-to-end test build: releases come from a local address", { build: e2eBuild.marker });
+  }
   // First, and on its own: a failure further down must not leave the service worker without its
   // update beat.
   try {
@@ -48,6 +53,13 @@ async function bootstrap(): Promise<void> {
       when: Math.max(record.ramp.nextWakeAt ?? 0, Date.now() + 1000),
     });
   }
+  // Alarms can be dropped when an update replaces the files; a switched-on feature
+  // with no alarm would otherwise never wake again.
+  await rearmFeatureAlarms({
+    radar: container().radar,
+    engagement: container().engagement,
+    clock: container().clock,
+  });
   // Budget limits come from the bundled recipe, narrowed again by whatever the rate
   // ramp measured on this install.
   container().governor.applyBudget((await container().getRecipe()).callBudget);
@@ -164,12 +176,12 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     return;
   }
   if (alarm.name === ALARM_RADAR) {
-    void (async () => {
-      const c = container();
+    const c = container();
+    void c.activity.track("radar", async () => {
       const tokens = await c.scraper.scrapeFromOpenTab();
       const groups = await c.groups.getGroups(CURRENT_SESSION);
       await c.radar.tick(tokens, await c.getRecipe(), new Map(groups.map((g) => [g.id, g])));
-    })();
+    });
     return;
   }
   if (alarm.name === ALARM_GROUPS_RESUME) {
@@ -180,9 +192,12 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === ALARM_ENGAGEMENT) {
     // Tokens from a tab the user already has open, never one we open. This is
     // unattended background work: a tab appearing on its own is the opposite of that.
-    void container().engagement.tick(
-      () => container().scraper.scrapeFromOpenTab(),
-      () => container().getRecipe(),
+    const c = container();
+    void c.activity.track("engagement", () =>
+      c.engagement.tick(
+        () => c.scraper.scrapeFromOpenTab(),
+        () => c.getRecipe(),
+      ),
     );
     return;
   }

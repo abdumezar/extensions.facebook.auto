@@ -26,3 +26,12 @@ export interface UpdateState {
    */
   lastCheckFailed?: { error: UpdateError; at: number };
 }
+
+/** What is running that an update must not interrupt. */
+export type BusyReason = "campaign" | "ramp" | "radar" | "engagement" | "extraction" | "groups";
+
+/** Whether the service worker is in the middle of work a reload would cut short. */
+export interface BusyState {
+  busy: boolean;
+  reason?: BusyReason;
+}

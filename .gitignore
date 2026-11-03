@@ -20,3 +20,6 @@ keys/
 # fbRecipe.ts, and leave the recording on the machine that made it.
 HARs/
 *.har
+
+# Throwaway end-to-end update builds (scripts/e2e-update.mjs). Never part of the repository.
+e2e/

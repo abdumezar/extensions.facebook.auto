@@ -4,6 +4,7 @@ import { crx } from "@crxjs/vite-plugin";
 import { resolve } from "node:path";
 import devManifest, { buildManifest, CONTENT_SCRIPT_ENTRY, contentScriptMatches } from "./manifest.config.js";
 import { classicContentScript } from "./scripts/lib/classicContentScript.js";
+import { e2eInjection } from "./scripts/lib/e2eBuild.js";
 
 const rootDir = import.meta.dirname;
 
@@ -14,6 +15,8 @@ const alias = {
 
 export default defineConfig(({ mode, command }) => ({
   resolve: { alias },
+  // `null` outside an end-to-end build, so the code that reads it folds away.
+  define: { __NASHIR_E2E__: mode === "e2e" ? JSON.stringify(e2eInjection(process.env)) : "null" },
   plugins: [
     react(),
     // A release builds the content script on its own, as one classic script (see the plugin

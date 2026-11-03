@@ -30,13 +30,15 @@ import { LinkPreviewService } from "../engine/LinkPreviewService.js";
 import { DocIdStore } from "../engine/DocIdStore.js";
 import { DocIdHarvester } from "../engine/DocIdHarvester.js";
 import { UpdateService } from "../update/UpdateService.js";
+import { e2eBuild } from "../update/e2e.js";
+import { ActivityTracker } from "./activity.js";
 
 /** One of the manifest icons, so the build ships it. */
 export const LEAD_NOTIFICATION_ICON = "src/assets/icons/128.png";
 
 /** Where the service worker asks whether a newer release has been published. */
 const RELEASES_API_URL =
-  "https://api.github.com/repos/abdumezar/extensions.facebook.auto/releases/latest";
+  e2eBuild?.api ?? "https://api.github.com/repos/abdumezar/extensions.facebook.auto/releases/latest";
 
 /**
  * Composition root. Builds every engine module from platform adapters exactly once.
@@ -250,6 +252,9 @@ export class Container {
     RELEASES_API_URL,
     () => chrome.runtime.getManifest().version,
   );
+
+  /** Unattended jobs in flight, so an update does not reload the extension in the middle of one. */
+  readonly activity = new ActivityTracker();
 
   /** The recipe to post with: the bundled one, with any doc_ids learned since. */
   async getRecipe(): Promise<FbRecipe> {
