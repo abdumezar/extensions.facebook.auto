@@ -127,7 +127,7 @@ export class ChromeTabs implements TabPort {
 
   private waitForComplete(tabId: number): Promise<void> {
     return new Promise((resolve) => {
-      const listener = (updatedTabId: number, info: chrome.tabs.TabChangeInfo) => {
+      const listener = (updatedTabId: number, info: chrome.tabs.OnUpdatedInfo) => {
         if (updatedTabId === tabId && info.status === "complete") {
           chrome.tabs.onUpdated.removeListener(listener);
           resolve();
