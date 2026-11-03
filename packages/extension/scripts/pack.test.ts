@@ -1,10 +1,15 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { unzipSync } from "fflate";
 // @ts-expect-error - plain .mjs build scripts, no declarations
 import { createZip, crc32 } from "./lib/zip.mjs";
+// @ts-expect-error - plain .mjs build scripts, no declarations
+import { packRelease, isInstallablePath, releasePathProblems } from "./pack.mjs";
+import { isSafeReleasePath } from "../src/update/applyUpdate.js";
 
 /**
  * Packaging is the last step before someone installs the extension, and the zip writer
@@ -81,5 +86,163 @@ describe("createZip", () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+/**
+ * `nashir-files.json` is the list the updater checks an archive against, and it compares
+ * with plain `.sort()` order, so the packer has to write exactly that order.
+ */
+describe("isInstallablePath", () => {
+  // Mirrors `isSafeReleasePath` in src/update/applyUpdate.ts, which the updater applies to
+  // every entry. Catching a bad name here keeps it from surfacing as a refused update.
+  it("accepts what a build produces", () => {
+    for (const path of ["manifest.json", "assets/index.ts-C0B9g3py.js", "src/dashboard/index.html", "_locales/ar/messages.json"]) {
+      expect(isInstallablePath(path), path).toBe(true);
+    }
+  });
+
+  it("rejects names Windows would rewrite or reserve, and odd characters", () => {
+    for (const path of ["", "a//b.js", "../a.js", "a/./b.js", "a b.js", "dir./a.js", "CON.js", "a/nul", "lpt1.txt", "ä.js", "a\\b.js","C:/x.js"]) {
+      expect(isInstallablePath(path), path).toBe(false);
+    }
+  });
+});
+
+describe("isInstallablePath against the updater's rule", () => {
+  // The two are written separately (the packer runs without a TypeScript build), so this is
+  // what keeps them the same rule: every string up to three tokens from the awkward ones.
+  const tokens = ["a", "A", ".", "..", "/", "\\", ":", " ", "-", "_", "con", "x.", "é"];
+  const corpus = ["", ...tokens];
+  for (const first of tokens) {
+    for (const second of tokens) {
+      corpus.push(first + second);
+      for (const third of tokens) corpus.push(first + second + third);
+    }
+  }
+
+  it("agrees on every string in the corpus", () => {
+    expect(corpus.length).toBe(1 + 13 + 169 + 2197);
+    const disagreements = corpus.filter((path) => isInstallablePath(path) !== isSafeReleasePath(path));
+    expect(disagreements).toEqual([]);
+  });
+
+  it("includes both outcomes, so agreeing is not trivial", () => {
+    expect(corpus.some((path) => isSafeReleasePath(path))).toBe(true);
+    expect(corpus.some((path) => !isSafeReleasePath(path))).toBe(true);
+  });
+});
+
+describe("releasePathProblems", () => {
+  // The same two checks `unpackRelease` makes on the way in, so a bad tree fails at packaging.
+  it("accepts a tree of distinct files", () => {
+    expect(releasePathProblems(["manifest.json", "assets/a.js", "assets/b.js", "assets-x/a.js"])).toEqual([]);
+  });
+
+  it("flags two paths that differ only by case", () => {
+    const problems = releasePathProblems(["assets/Index.js", "assets/index.js"]);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toMatch(/Index\.js/);
+  });
+
+  it("flags a file that is also the folder of another, in any case", () => {
+    expect(releasePathProblems(["assets", "assets/a.js"])).toHaveLength(1);
+    expect(releasePathProblems(["Assets", "assets/deep/a.js"])).toHaveLength(1);
+  });
+});
+
+describe("packRelease", () => {
+  let root: string;
+  let dist: string;
+  let out: string;
+
+  function put(name: string, data: string) {
+    const path = join(dist, name);
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, data);
+  }
+
+  beforeEach(() => {
+    root = mkdtempSync(join(tmpdir(), "nashir-pack-"));
+    dist = join(root, "dist");
+    out = join(root, "release");
+    // Names chosen so UTF-16 code-unit order differs from locale order: upper case before
+    // lower case, and "_" between them.
+    put("manifest.json", '{"name":"Nashir","version":"1.2.3"}');
+    put("assets/b.js", "b");
+    put("assets/c.js", "c");
+    put("Zeta.js", "z");
+    put("alpha.js", "a");
+    put("_locales/ar/messages.json", "{}");
+  });
+  afterEach(() => rmSync(root, { recursive: true, force: true }));
+
+  const readZip = (path: string) => unzipSync(new Uint8Array(readFileSync(path)));
+
+  it("writes nashir-files.json listing every file, sorted", async () => {
+    const { zipPath } = await packRelease({ dist, out });
+    expect(zipPath).toBe(join(out, "nashir-1.2.3.zip"));
+
+    const entries = readZip(zipPath);
+    const list = JSON.parse(new TextDecoder().decode(entries["nashir-files.json"]));
+    expect(list).toEqual([
+      "Zeta.js",
+      "_locales/ar/messages.json",
+      "alpha.js",
+      "assets/b.js",
+      "assets/c.js",
+      "manifest.json",
+      "nashir-files.json",
+    ]);
+    expect(list).toEqual([...list].sort());
+    expect(Object.keys(entries).sort()).toEqual(list);
+  });
+
+  it("is byte-identical when run twice on the same input", async () => {
+    const first = readFileSync((await packRelease({ dist, out })).zipPath);
+    const second = readFileSync((await packRelease({ dist, out })).zipPath);
+    expect(first.equals(second)).toBe(true);
+  });
+
+  it.each(["assets/has space.js", "assets/ünï.js"])(
+    "refuses %s, which the updater would later refuse to install",
+    async (name) => {
+      put(name, "x");
+      await expect(packRelease({ dist, out })).rejects.toThrow(name);
+    },
+  );
+
+  it.each([
+    ["false", { use_dynamic_url: false }],
+    ["missing", {}],
+  ])("refuses a web-accessible entry whose use_dynamic_url is %s", async (_label, extra) => {
+    put(
+      "manifest.json",
+      JSON.stringify({ version: "1.2.3", web_accessible_resources: [{ matches: ["*://*/*"], resources: ["a.js"], ...extra }] }),
+    );
+    await expect(packRelease({ dist, out })).rejects.toThrow(/use_dynamic_url/);
+  });
+
+  it("accepts web-accessible entries that are all dynamic", async () => {
+    put(
+      "manifest.json",
+      JSON.stringify({
+        version: "1.2.3",
+        web_accessible_resources: [{ matches: ["*://*/*"], resources: ["a.js"], use_dynamic_url: true }],
+      }),
+    );
+    await expect(packRelease({ dist, out })).resolves.toBeTruthy();
+  });
+
+  it("refuses a dist that already has its own nashir-files.json", async () => {
+    put("nashir-files.json", "[]");
+    await expect(packRelease({ dist, out })).rejects.toThrow(/nashir-files\.json/);
+  });
+
+  it("runs from the command line against --dist and --out", () => {
+    const script = join(dirname(fileURLToPath(import.meta.url)), "pack.mjs");
+    const output = execFileSync(process.execPath, [script, "--dist", dist, "--out", out], { encoding: "utf8" });
+    expect(output).toContain("nashir-1.2.3.zip");
+    expect(Object.keys(readZip(join(out, "nashir-1.2.3.zip")))).toContain("nashir-files.json");
   });
 });

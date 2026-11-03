@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import * as ed from "@noble/ed25519";
 import { verifyReleaseSignature } from "./verify.js";
+import { RELEASE_PUBLIC_KEYS_B64 } from "./releaseKey.js";
 
 const toBase64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes));
 const zip = new TextEncoder().encode("pretend this is a release archive");
@@ -57,6 +58,16 @@ describe("verifyReleaseSignature", () => {
     const { secret } = await makeKeyPair();
     const sig = toBase64(await ed.signAsync(zip, secret));
     expect(await verifyReleaseSignature(zip, sig, [])).toBe(false);
+  });
+
+  it("the bundled list is what an omitted key list means", async () => {
+    const { secret, publicB64 } = await makeKeyPair();
+    const sig = toBase64(await ed.signAsync(zip, secret));
+    expect(RELEASE_PUBLIC_KEYS_B64.length).toBeGreaterThan(0);
+    expect(await verifyReleaseSignature(zip, sig, RELEASE_PUBLIC_KEYS_B64)).toBe(
+      await verifyReleaseSignature(zip, sig),
+    );
+    expect(RELEASE_PUBLIC_KEYS_B64).not.toContain(publicB64);
   });
 
   it("a key not in the bundled list verifies nothing", async () => {
