@@ -29,6 +29,7 @@ Requires Chrome 116 or newer.
 ## Contents
 
 - [Features](#features)
+- [Coming soon](#coming-soon)
 - [Install](#install)
 - [Updating](#updating)
 - [Safety model](#safety-model)
@@ -46,9 +47,8 @@ Requires Chrome 116 or newer.
 - **Multiple accounts.** Run campaigns from several of your own Facebook accounts (cookie-based).
 - **Safety governor.** A Facebook call budget, cooldowns, pacing and per-feature caps. The **Facebook call budget** card on the Logs page shows recent call counts and, during a cooldown, the rule that matched.
 - **Audience extraction.** Collect the people who reacted to or commented on a post, including contact details they typed themselves in a comment. Export to CSV or JSON, or hand a number over to WhatsApp.
-- **Lead Radar.** Checks your watched groups about every 15 minutes and scores posts that look like buying intent. It uses plain keyword rules, no model.
-- **Auto first comment.** Add your link or details as the first comment under a post.
-- **Group discovery and joining.** Find groups and join them in small batches: at most 8 a day and 3 per batch, with spacing between joins. You can also leave groups.
+- **Engagement loop.** Reads your own posts back, so you can see how they are doing. It is opt-in: turn it on in the Audience page.
+- **Leaving groups.** Leave groups you no longer need, one at a time or several at once, from the Groups page.
 - **Large accounts.** The Groups page is paginated, and group sync is resumable, so very large group lists finish loading.
 - **Analytics.** See what you posted, where, and how it went. Export to CSV.
 - **Facebook operations card.** Facebook renames its internal identifiers (`doc_id`s) from time to time. Nashir re-learns them from Facebook's own pages and shows which ones are current.
@@ -65,6 +65,16 @@ Requires Chrome 116 or newer.
     <td width="50%"><img src="docs/screenshots/en/update-banner.png" alt="The update banner"><br><sub>The update banner, shown when a new version is out.</sub></td>
   </tr>
 </table>
+
+## Coming soon
+
+These features are built into the extension, but each one waits on a Facebook operation that will be added in an upcoming update. The update arrives through the one-click update. Until then, the extension shows that they are not available yet and does nothing.
+
+- **Lead Radar.** Watches your groups for posts that look like buying intent.
+- **Auto first comment.** Adds your link or details as the first comment under a post, and lets Lead Radar reply.
+- **Group discovery and joining.** Finds groups and joins them in small, capped batches.
+- **Group member and page follower lists.** Extracts the members of a group and the followers of a page.
+- **Link preview in posts.** Shows Facebook's preview of a link before you post.
 
 ## Install
 
@@ -98,7 +108,7 @@ Nashir is built to go slowly.
 - Every call to Facebook goes through one governor with a call budget, pacing and cooldowns. Recent counts show on the Logs page.
 - When Facebook signals a limit, Nashir pauses and shows the rule that matched.
 - When Facebook asks you to confirm it is you, Nashir stops all calls for that account until you finish the check.
-- Features have their own caps. Group joining, for example, is limited to 8 a day and 3 per batch, with spacing between joins.
+- Features have their own caps and spacing. Large group lists, for example, load in small resumable batches.
 - Updates are verified against a signature before any file is written, and a failed write is rolled back.
 
 The governor lowers the risk of a restriction. It cannot remove it.
@@ -149,7 +159,7 @@ packages/
   extension/            Chrome MV3 extension
     src/
       background/       service worker: message router, alarms, rule setup
-      engine/           campaigns, call governor, groups, audience, Lead Radar
+      engine/           campaigns, call governor, groups, audience
       platform/         thin adapters over Chrome APIs
       content/          content script that runs on facebook.com
       dashboard/        React dashboard (Arabic and English)
