@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nashir — post to many Facebook groups, safely</title>
+  <meta name="description" content="Nashir is a free, Arabic-first Chrome extension that posts to many Facebook groups with a built-in safety governor. Open source, no server, no telemetry.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src https://api.github.com; base-uri 'none'; form-action 'none'">
+  <meta name="theme-color" content="#116b56">
+  <link rel="canonical" href="https://abdumezar.github.io/extensions.facebook.auto/en/">
+  <link rel="alternate" hreflang="ar" href="https://abdumezar.github.io/extensions.facebook.auto/">
+  <link rel="alternate" hreflang="en" href="https://abdumezar.github.io/extensions.facebook.auto/en/">
+  <meta property="og:title" content="Nashir — post to many Facebook groups, safely">
+  <meta property="og:description" content="A free, Arabic-first Chrome extension that posts to many Facebook groups with a built-in safety governor. Open source; all data stays on your device.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://abdumezar.github.io/extensions.facebook.auto/en/">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="ar_SA">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" type="image/png" sizes="32x32" href="../assets/icon-32.png">
+  <link rel="apple-touch-icon" href="../assets/icon-128.png">
+  <link rel="stylesheet" href="../assets/site.css">
+  <script src="../assets/site.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="./"><img src="../assets/icon-32.png" width="32" height="32" alt="">Nashir</a>
+      <nav class="site-nav" aria-label="Main">
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#install">Install</a></li>
+          <li><a href="#updates">Updates</a></li>
+          <li><a href="#safety">Safety and privacy</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
+      </nav>
+      <div class="header-actions">
+        <a class="btn btn-outlined btn-sm" href="../" hreflang="ar" lang="ar">العربية</a>
+        <a class="btn btn-tonal btn-sm" href="https://github.com/abdumezar/extensions.facebook.auto" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="wrap hero-grid">
+        <div>
+          <p class="eyebrow">Nashir (ناشِر) for Chrome</p>
+          <h1 id="hero-title">Post to many Facebook groups, safely.</h1>
+          <p class="lead">Nashir is a free, Arabic-first Chrome extension that posts to many Facebook groups for you. A built-in safety governor keeps it inside a call budget, with cooldowns and pacing. Everything stays on your device.</p>
+          <div class="actions">
+            <a class="btn btn-filled btn-lg" data-download href="https://github.com/abdumezar/extensions.facebook.auto/releases/latest" rel="noopener">Download Nashir</a>
+            <a class="btn btn-outlined" href="#install">How to install</a>
+          </div>
+          <p class="warning-line" role="note">Nashir automates Facebook with your own session. That is against Facebook's Terms, and you use it at your own risk. <a href="#safety">Details</a></p>
+          <p class="release-meta" data-release-meta hidden>Version <bdi dir="ltr" data-latest-version></bdi> · <span data-latest-date></span></p>
+          <ul class="badges">
+            <li>Free</li>
+            <li>GPL-3.0</li>
+            <li>No server, no telemetry</li>
+            <li>Chrome 116 or newer</li>
+          </ul>
+        </div>
+        <figure>
+          <div class="shot"><img src="../assets/screenshots/dashboard.png" width="800" height="500" alt="The Nashir dashboard showing the campaign list, today's call budget and the status of each Facebook account."></div>
+        </figure>
+      </div>
+    </section>
+
+    <section id="what" aria-labelledby="what-title">
+      <div class="wrap">
+        <h2 id="what-title">What it does</h2>
+        <p class="lead">You write a post once and choose the groups. Nashir publishes it group by group at a safe pace, tells you what worked in each, and stops when Facebook asks for a check or signals a limit. It also helps you find the right groups and the right people, without leaving the extension.</p>
+      </div>
+    </section>
+
+    <section id="features" class="alt" aria-labelledby="features-title">
+      <div class="wrap">
+        <h2 id="features-title">Features</h2>
+        <div class="grid">
+          <article class="card"><h3>Campaigns</h3><p>Write once, pick your groups, and see the result for every group.</p></article>
+          <article class="card"><h3>Safety governor</h3><p>A call budget, cooldowns, pacing and per-feature caps. A Facebook security check stops everything until you clear it.</p></article>
+          <article class="card"><h3>Multiple accounts</h3><p>Run campaigns from several of your own Facebook accounts.</p></article>
+          <article class="card"><h3>Scheduling</h3><p>Queue a campaign to start later instead of sitting at the screen.</p></article>
+          <article class="card"><h3>Analytics</h3><p>See what you posted, where, and how it went over time.</p></article>
+          <article class="card"><h3>Audience extraction</h3><p>Collect the people who reacted to or commented on a post, including phone numbers they wrote themselves in a comment, and export the list.</p></article>
+          <article class="card"><h3>Lead Radar</h3><p>Watch your groups for posts that look like someone wants to buy, and check them about every 15 minutes.</p></article>
+          <article class="card"><h3>Auto first comment</h3><p>Add your link or details as the first comment under a post, automatically.</p></article>
+          <article class="card"><h3>Group discovery and joining</h3><p>Find groups and join them in small batches: at most 8 a day, 3 per batch, with spacing between joins.</p></article>
+          <article class="card"><h3>Facebook operations card</h3><p>Facebook renames its internal identifiers from time to time. Nashir re-learns them from Facebook's own pages and shows which ones are current.</p></article>
+          <article class="card"><h3>Arabic first</h3><p>An Arabic interface by default, with English too, in light and dark themes.</p></article>
+          <article class="card"><h3>Signed one-click updates</h3><p>New versions come from GitHub Releases and are checked against a signature before anything is installed.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="screenshots" aria-labelledby="screenshots-title">
+      <div class="wrap">
+        <h2 id="screenshots-title">Screenshots</h2>
+        <div class="shots">
+          <figure>
+            <div class="shot"><img src="../assets/screenshots/campaign-run.png" width="800" height="500" loading="lazy" alt="A campaign in progress, listing each target group with its result and the time until the next post."></div>
+            <figcaption>A campaign running: one line per group, with its result.</figcaption>
+          </figure>
+          <figure>
+            <div class="shot"><img src="../assets/screenshots/audience.png" width="800" height="500" loading="lazy" alt="The audience page listing people who reacted to or commented on a post, with filters and an export button."></div>
+            <figcaption>The audience page, with filters and export.</figcaption>
+          </figure>
+          <figure>
+            <div class="shot"><img src="../assets/screenshots/operations.png" width="800" height="500" loading="lazy" alt="The Facebook operations card listing each Facebook operation and whether its identifier is current."></div>
+            <figcaption>The Facebook operations card shows which operations are current.</figcaption>
+          </figure>
+          <figure>
+            <div class="shot"><img src="../assets/screenshots/update-banner.png" width="800" height="500" loading="lazy" alt="The dashboard banner announcing a new version, with an Update button."></div>
+            <figcaption>The update banner, shown when a new version is out.</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section id="install" class="alt" aria-labelledby="install-title">
+      <div class="wrap">
+        <h2 id="install-title">Install in four steps</h2>
+        <p class="lead">Nashir is not on the Chrome Web Store, so you install it from GitHub. It takes a couple of minutes and needs no tools.</p>
+        <!-- [html-validate-disable-next no-redundant-role, prefer-native-element -- list-style is removed, so the role keeps the list semantics in Safari] -->
+        <ol class="steps" role="list">
+          <li>
+            <div class="step-text">
+              <h3>Download and unzip</h3>
+              <p>Download <code>nashir-&lt;version&gt;.zip</code> from the latest release and unzip it into a normal folder such as <code>Documents\Nashir</code>. Do not use <code>AppData</code>, a temporary folder or the Downloads folder: Chrome reads the extension from this folder every time it starts, so it has to stay put.</p>
+              <p><a class="btn btn-filled btn-sm" data-download href="https://github.com/abdumezar/extensions.facebook.auto/releases/latest" rel="noopener">Download Nashir</a></p>
+            </div>
+            <figure><div class="shot"><img src="../assets/screenshots/install-unzip.png" width="800" height="500" loading="lazy" alt="The downloaded zip file being extracted into a folder named Nashir inside Documents."></div></figure>
+          </li>
+          <li>
+            <div class="step-text">
+              <h3>Turn on Developer mode</h3>
+              <p>Type <code>chrome://extensions</code> in Chrome's address bar and press Enter. Switch on <strong>Developer mode</strong> in the top corner of the page.</p>
+            </div>
+            <figure><div class="shot"><img src="../assets/screenshots/install-developer-mode.png" width="800" height="500" loading="lazy" alt="The Chrome extensions page with the Developer mode switch turned on."></div></figure>
+          </li>
+          <li>
+            <div class="step-text">
+              <h3>Load the folder</h3>
+              <p>Click <strong>Load unpacked</strong> and choose the folder you unzipped. Nashir appears in the list. Pin it to the toolbar if you like.</p>
+            </div>
+            <figure><div class="shot"><img src="../assets/screenshots/install-load-unpacked.png" width="800" height="500" loading="lazy" alt="The Load unpacked button on the Chrome extensions page, and Nashir shown in the list afterwards."></div></figure>
+          </li>
+          <li>
+            <div class="step-text">
+              <h3>Link the folder once</h3>
+              <p>Open the Nashir dashboard. When it asks, choose the same folder again and allow access. This is what lets the extension update itself later, with one click.</p>
+            </div>
+            <figure><div class="shot"><img src="../assets/screenshots/install-link-folder.png" width="800" height="500" loading="lazy" alt="The dashboard asking the user to link the extension's folder, with a button to choose it."></div></figure>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="updates" aria-labelledby="updates-title">
+      <div class="wrap">
+        <h2 id="updates-title">How updates work</h2>
+        <p class="lead">When a new version is released, a banner appears in the dashboard.</p>
+        <ol class="plain">
+          <li>Click <strong>Update</strong> in the banner.</li>
+          <li>Allow access to the folder if Chrome asks.</li>
+          <li>Nashir checks the release's signature first. Only if it matches does it write the new files, and then the extension reloads itself on the new version.</li>
+        </ol>
+        <div class="callout">
+          <p><strong>Prefer to do it by hand?</strong> Download the new zip, unzip it over the same folder, then open <code>chrome://extensions</code> and press <strong>Reload</strong> on Nashir.</p>
+        </div>
+        <p>Updates replace the extension's files only. Your campaigns and settings are kept by Chrome separately and stay as they are.</p>
+      </div>
+    </section>
+
+    <section id="safety" class="alt" aria-labelledby="safety-title">
+      <div class="wrap">
+        <h2 id="safety-title">Safety and privacy</h2>
+        <div class="split">
+          <div>
+            <h3>Built to go slowly</h3>
+            <ul class="plain">
+              <li>Every call to Facebook passes through one governor with a call budget, pacing and cooldowns. Recent counts show on the Logs page.</li>
+              <li>Group joining is capped at 8 a day and 3 per batch, with spacing between joins.</li>
+              <li>When Facebook signals a limit, Nashir pauses and shows the rule that matched.</li>
+              <li>When Facebook asks you to confirm it is you, Nashir stops all calls for that account until you finish the check.</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Your data stays with you</h3>
+            <ul class="plain">
+              <li>Campaigns, groups, audiences and settings are stored in your browser, on your device.</li>
+              <li>There is no Nashir server and no telemetry. Nothing is collected about you or your activity.</li>
+              <li>Besides facebook.com, GitHub (update checks and downloads) is the only other address the extension contacts by itself. Links you click yourself, such as WhatsApp chat links, open normally.</li>
+              <li>The code is open and released under GPL-3.0, so you can read exactly what it does.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="callout warn" role="note">
+          <p><strong>Use at your own risk.</strong> Nashir automates Facebook's internal endpoints using your own logged-in session. That is against Facebook's Terms and can lead to restrictions on your account. The safety governor lowers the risk. It cannot remove it.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq" aria-labelledby="faq-title">
+      <div class="wrap">
+        <h2 id="faq-title">Frequently asked questions</h2>
+        <div class="faq">
+          <details>
+            <summary>What happens if Facebook shows a security checkpoint?</summary>
+            <p>Nashir recognises Facebook's "confirm it is you" check and stops every call for that account, because calls made during a block can make it last longer. It tells you to open Facebook and finish the check. After you do, you resume from the dashboard.</p>
+          </details>
+          <details>
+            <summary>What is a cooldown?</summary>
+            <p>When Facebook signals that you are going too fast, the governor pauses that kind of call for a while. The Logs page shows the rule that matched and how long the pause lasts. Waiting it out is the safe choice.</p>
+          </details>
+          <details>
+            <summary>Why is Nashir not in the Chrome Web Store?</summary>
+            <p>The Chrome Web Store is not a fit for this kind of automation, so Nashir is distributed from GitHub. Every release is signed, and the extension verifies the signature before it applies an update.</p>
+          </details>
+          <details>
+            <summary>Why must the folder not be in AppData or a temporary folder?</summary>
+            <p>Chrome loads the extension from that folder each time it starts, and one-click updates write new files into it. Temporary and Downloads folders get cleaned or moved, which would break the extension. A folder such as <code>Documents\Nashir</code> is stable and easy to find.</p>
+          </details>
+          <details>
+            <summary>Will an update erase my data?</summary>
+            <p>No. An update replaces the extension's files in the folder. Your data lives in Chrome's storage for the extension, not in that folder.</p>
+          </details>
+          <details>
+            <summary>Is it really free?</summary>
+            <p>Yes. Nashir is open source under GPL-3.0. There is no account to create and nothing to pay.</p>
+          </details>
+          <details>
+            <summary>Can my Facebook account be restricted?</summary>
+            <p>It can. Automating Facebook is against its Terms, whatever the pace. Nashir is built to be careful, but you use it at your own risk.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section id="contributing" class="alt" aria-labelledby="contributing-title">
+      <div class="wrap">
+        <h2 id="contributing-title">Contributing</h2>
+        <p class="lead">Bug reports, fixes, translations and documentation are all welcome.</p>
+        <ul class="plain">
+          <li>Read the <a href="https://github.com/abdumezar/extensions.facebook.auto/blob/main/CONTRIBUTING.md" rel="noopener">contribution guide</a> for setup, checks and commit style.</li>
+          <li>If an operation stops working, open an issue and name the operation shown on the Facebook operations card.</li>
+          <li>Report security problems privately through the <a href="https://github.com/abdumezar/extensions.facebook.auto/security/advisories/new" rel="noopener">Security tab</a>, never in a public issue. See the <a href="https://github.com/abdumezar/extensions.facebook.auto/blob/main/SECURITY.md" rel="noopener">security policy</a>.</li>
+        </ul>
+        <p><a class="btn btn-outlined" href="https://github.com/abdumezar/extensions.facebook.auto/issues" rel="noopener">Open an issue</a></p>
+      </div>
+    </section>
+
+    <section id="about" aria-labelledby="about-title">
+      <div class="wrap">
+        <h2 id="about-title">About the developer</h2>
+        <div class="pending">
+          <p><code>ABOUT-PENDING</code></p>
+          <p>This section will be filled in with the developer's own words.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <ul>
+        <li><a href="https://github.com/abdumezar/extensions.facebook.auto" rel="noopener">Source code</a></li>
+        <li><a href="https://github.com/abdumezar/extensions.facebook.auto/releases" rel="noopener">Releases</a></li>
+        <li><a href="https://github.com/abdumezar/extensions.facebook.auto/blob/main/CHANGELOG.md" rel="noopener">Changelog</a></li>
+        <li><a href="https://github.com/abdumezar/extensions.facebook.auto/blob/main/SECURITY.md" rel="noopener">Security</a></li>
+        <li><a href="https://github.com/abdumezar/extensions.facebook.auto/blob/main/LICENSE" rel="noopener">GPL-3.0</a></li>
+        <li><a href="../" hreflang="ar" lang="ar">العربية</a></li>
+      </ul>
+      <p>Nashir is released under GPL-3.0-only. It is an independent project, not affiliated with or endorsed by Facebook or Meta.</p>
+    </div>
+  </footer>
+</body>
+</html>
