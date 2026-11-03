@@ -1,0 +1,22 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+coverage/
+*.pem
+.vite/
+stats.html
+
+# Packaged builds and local key material. Neither belongs in the repository.
+release/
+keys/
+
+# Captured HAR files. These are recordings of a real logged-in Facebook session: they
+# carry session tokens, and the names, profile URLs and comment text of real people who
+# never agreed to be in this repository. Read the doc_ids out of them, put those in
+# fbRecipe.ts, and leave the recording on the machine that made it.
+HARs/
+*.har

@@ -1,0 +1,46 @@
+{
+  "name": "@nashir/extension",
+  "version": "0.1.0",
+  "private": true,
+  "license": "GPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "pnpm typecheck && vite build",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.scripts.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "gen:tokens": "vite-node -c scripts/vite-node.config.ts scripts/write-tokens.ts",
+    "pack:ext": "node scripts/pack.mjs"
+  },
+  "dependencies": {
+    "@nashir/shared": "workspace:*",
+    "i18next": "^24.2.1",
+    "idb": "^8.0.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-i18next": "^15.4.0",
+    "zod": "^3.24.1",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@crxjs/vite-plugin": "^2.0.0-beta.28",
+    "@material/material-color-utilities": "^0.4.0",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.5",
+    "@types/chrome": "^0.0.293",
+    "@types/node": "^26.2.0",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "jsdom": "^25.0.1",
+    "postcss": "^8.5.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3",
+    "vite": "^5.4.11",
+    "vite-node": "^6.0.0",
+    "vitest": "^2.1.8"
+  }
+}

@@ -1,0 +1,172 @@
+/*
+ * Material Design 3 token layer — GENERATED, do not edit by hand.
+ *
+ * Source seed: #2FA084 (Nashir brand green)
+ * Regenerate:  pnpm --filter @nashir/extension gen:tokens
+ *
+ * Colour roles are derived in HCT space via @material/material-color-utilities
+ * (SchemeTonalSpot, contrast level 0). The dark scheme is a separate derivation,
+ * not a filter over the light one.
+ *
+ * Values are space-separated sRGB channels so an alpha can be composed in:
+ *   Tailwind    bg-primary  ->  rgb(var(--md-sys-color-primary) / 1)
+ *   Tailwind    bg-primary/12
+ *   plain CSS   color: rgb(var(--md-sys-color-primary));
+ */
+
+/* ===== Light scheme ===================================================== */
+:root {
+  color-scheme: light;
+
+  --md-sys-color-primary: 17 107 86;
+  --md-sys-color-on-primary: 255 255 255;
+  --md-sys-color-primary-container: 163 242 216;
+  --md-sys-color-on-primary-container: 0 81 64;
+  --md-sys-color-inverse-primary: 135 214 188;
+  --md-sys-color-secondary: 75 99 91;
+  --md-sys-color-on-secondary: 255 255 255;
+  --md-sys-color-secondary-container: 206 233 221;
+  --md-sys-color-on-secondary-container: 52 76 67;
+  --md-sys-color-tertiary: 65 98 118;
+  --md-sys-color-on-tertiary: 255 255 255;
+  --md-sys-color-tertiary-container: 196 231 255;
+  --md-sys-color-on-tertiary-container: 40 75 94;
+  --md-sys-color-error: 186 26 26;
+  --md-sys-color-on-error: 255 255 255;
+  --md-sys-color-error-container: 255 218 214;
+  --md-sys-color-on-error-container: 147 0 10;
+  --md-sys-color-background: 245 251 246;
+  --md-sys-color-on-background: 23 29 26;
+  --md-sys-color-surface: 245 251 246;
+  --md-sys-color-on-surface: 23 29 26;
+  --md-sys-color-surface-variant: 219 229 223;
+  --md-sys-color-on-surface-variant: 63 73 69;
+  --md-sys-color-surface-dim: 213 219 215;
+  --md-sys-color-surface-bright: 245 251 246;
+  --md-sys-color-surface-container-lowest: 255 255 255;
+  --md-sys-color-surface-container-low: 239 245 241;
+  --md-sys-color-surface-container: 233 239 235;
+  --md-sys-color-surface-container-high: 227 234 229;
+  --md-sys-color-surface-container-highest: 222 228 224;
+  --md-sys-color-surface-tint: 17 107 86;
+  --md-sys-color-outline: 111 121 117;
+  --md-sys-color-outline-variant: 191 201 195;
+  --md-sys-color-inverse-surface: 43 50 47;
+  --md-sys-color-inverse-on-surface: 236 242 238;
+  --md-sys-color-shadow: 0 0 0;
+  --md-sys-color-scrim: 0 0 0;
+
+  --md-sys-color-success: 0 109 67;
+  --md-sys-color-on-success: 255 255 255;
+  --md-sys-color-success-container: 146 247 188;
+  --md-sys-color-on-success-container: 0 33 17;
+
+  --md-sys-color-warning: 119 90 0;
+  --md-sys-color-on-warning: 255 255 255;
+  --md-sys-color-warning-container: 255 223 153;
+  --md-sys-color-on-warning-container: 37 26 0;
+}
+
+/* ===== Dark scheme ====================================================== */
+.dark {
+  color-scheme: dark;
+
+  --md-sys-color-primary: 135 214 188;
+  --md-sys-color-on-primary: 0 56 44;
+  --md-sys-color-primary-container: 0 81 64;
+  --md-sys-color-on-primary-container: 163 242 216;
+  --md-sys-color-inverse-primary: 17 107 86;
+  --md-sys-color-secondary: 178 204 194;
+  --md-sys-color-on-secondary: 29 53 45;
+  --md-sys-color-secondary-container: 52 76 67;
+  --md-sys-color-on-secondary-container: 206 233 221;
+  --md-sys-color-tertiary: 168 203 226;
+  --md-sys-color-on-tertiary: 13 52 70;
+  --md-sys-color-tertiary-container: 40 75 94;
+  --md-sys-color-on-tertiary-container: 196 231 255;
+  --md-sys-color-error: 255 180 171;
+  --md-sys-color-on-error: 105 0 5;
+  --md-sys-color-error-container: 147 0 10;
+  --md-sys-color-on-error-container: 255 218 214;
+  --md-sys-color-background: 15 21 18;
+  --md-sys-color-on-background: 222 228 224;
+  --md-sys-color-surface: 15 21 18;
+  --md-sys-color-on-surface: 222 228 224;
+  --md-sys-color-surface-variant: 63 73 69;
+  --md-sys-color-on-surface-variant: 191 201 195;
+  --md-sys-color-surface-dim: 15 21 18;
+  --md-sys-color-surface-bright: 52 59 56;
+  --md-sys-color-surface-container-lowest: 9 15 13;
+  --md-sys-color-surface-container-low: 23 29 26;
+  --md-sys-color-surface-container: 27 33 30;
+  --md-sys-color-surface-container-high: 37 43 41;
+  --md-sys-color-surface-container-highest: 48 54 51;
+  --md-sys-color-surface-tint: 135 214 188;
+  --md-sys-color-outline: 137 147 142;
+  --md-sys-color-outline-variant: 63 73 69;
+  --md-sys-color-inverse-surface: 222 228 224;
+  --md-sys-color-inverse-on-surface: 43 50 47;
+  --md-sys-color-shadow: 0 0 0;
+  --md-sys-color-scrim: 0 0 0;
+
+  --md-sys-color-success: 118 218 161;
+  --md-sys-color-on-success: 0 57 32;
+  --md-sys-color-success-container: 0 82 49;
+  --md-sys-color-on-success-container: 146 247 188;
+
+  --md-sys-color-warning: 244 191 42;
+  --md-sys-color-on-warning: 63 46 0;
+  --md-sys-color-warning-container: 90 67 0;
+  --md-sys-color-on-warning-container: 255 223 153;
+}
+
+/* ===== Scheme-independent tokens ======================================== */
+:root {
+  /* --- Shape scale ------------------------------------------------------- */
+  --md-sys-shape-none: 0;
+  --md-sys-shape-extra-small: 4px;
+  --md-sys-shape-small: 8px;
+  --md-sys-shape-medium: 12px;
+  --md-sys-shape-large: 16px;
+  --md-sys-shape-extra-large: 28px;
+  --md-sys-shape-full: 9999px;
+
+  /* --- Elevation (two-layer shadows, per spec) --------------------------- */
+  --md-sys-elevation-0: none;
+  --md-sys-elevation-1: 0 1px 2px 0 rgb(0 0 0 / 0.3), 0 1px 3px 1px rgb(0 0 0 / 0.15);
+  --md-sys-elevation-2: 0 1px 2px 0 rgb(0 0 0 / 0.3), 0 2px 6px 2px rgb(0 0 0 / 0.15);
+  --md-sys-elevation-3: 0 4px 8px 3px rgb(0 0 0 / 0.15), 0 1px 3px 0 rgb(0 0 0 / 0.3);
+  --md-sys-elevation-4: 0 6px 10px 4px rgb(0 0 0 / 0.15), 0 2px 3px 0 rgb(0 0 0 / 0.3);
+  --md-sys-elevation-5: 0 8px 12px 6px rgb(0 0 0 / 0.15), 0 4px 4px 0 rgb(0 0 0 / 0.3);
+
+  /* --- State layer opacities --------------------------------------------- */
+  --md-sys-state-hover: 0.08;
+  --md-sys-state-focus: 0.1;
+  --md-sys-state-pressed: 0.1;
+  --md-sys-state-dragged: 0.16;
+
+  /* Disabled: content at 38%, container at 12%. */
+  --md-sys-state-disabled-content: 0.38;
+  --md-sys-state-disabled-container: 0.12;
+
+  /* --- Motion ------------------------------------------------------------ */
+  --md-sys-easing-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --md-sys-easing-emphasized-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --md-sys-easing-emphasized-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
+  --md-sys-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --md-sys-easing-standard-decelerate: cubic-bezier(0, 0, 0, 1);
+  --md-sys-easing-standard-accelerate: cubic-bezier(0.3, 0, 1, 1);
+
+  --md-sys-duration-short1: 50ms;
+  --md-sys-duration-short2: 100ms;
+  --md-sys-duration-short3: 150ms;
+  --md-sys-duration-short4: 200ms;
+  --md-sys-duration-medium1: 250ms;
+  --md-sys-duration-medium2: 300ms;
+  --md-sys-duration-medium3: 350ms;
+  --md-sys-duration-medium4: 400ms;
+  --md-sys-duration-long1: 450ms;
+  --md-sys-duration-long2: 500ms;
+  --md-sys-duration-long3: 550ms;
+  --md-sys-duration-long4: 600ms;
+}

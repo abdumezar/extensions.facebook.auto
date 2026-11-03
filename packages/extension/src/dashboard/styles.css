@@ -1,0 +1,205 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Token layer and fonts are imported ahead of this file from main.tsx (and from
+ * popup/main.ts), so the cascade order is explicit rather than dependent on how
+ * the bundler resolves @import.
+ */
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  /*
+   * Chart series colours — the ONE palette that is not derived from the M3 seed.
+   *
+   * The obvious move is to draw the analytics chart in the theme's own success /
+   * warning / error roles, and it is wrong: those roles are tuned to sit beside
+   * text, not next to each other as adjacent fills. Measured on the light surface,
+   * theme error vs warning separate by only ΔE 3.2 for a deuteranope, and warning
+   * vs success by ΔE 12.3 even with full colour vision — two of the three bars in
+   * a stack would be indistinguishable.
+   *
+   * These steps keep the same semantics (green = published, amber = pending,
+   * red = failed, with failed pushed toward crimson so it parts from amber under
+   * deuteranopia) and pass every check of the palette validator in BOTH modes:
+   * lightness band, chroma floor, CVD separation, normal-vision floor, and 3:1
+   * against the surface. Dark is a separate derivation, not a lightened flip.
+   *
+   * Re-validate if these change:
+   *   light  #00897A,#C77800,#C2185B  on #F5FBF6
+   *   dark   #00A08D,#C08A00,#CF3A63  on #0F1512
+   */
+  :root {
+    --nashir-chart-published: 0 137 122;
+    --nashir-chart-pending: 199 120 0;
+    --nashir-chart-failed: 194 24 91;
+  }
+
+  .dark {
+    --nashir-chart-published: 0 160 141;
+    --nashir-chart-pending: 192 138 0;
+    --nashir-chart-failed: 207 58 99;
+  }
+
+  /*
+   * WCAG 2.2 §2.4.12 (Focus Not Obscured). The top app bar is sticky at 64px, so
+   * scrolling a focused element into view must stop short of it. scroll-padding
+   * on the scroll container is what browsers honour for focus scrolling.
+   */
+  * {
+    scroll-padding-block-start: 5rem;
+  }
+
+  body {
+    @apply bg-surface text-on-surface font-sans text-body-medium antialiased;
+  }
+
+  /*
+   * M3 line-heights are tuned for Roboto's Latin metrics. IBM Plex Sans Arabic
+   * sits taller and its diacritics clip at those values, so every role gets
+   * 1.15x leading (rounded to whole pixels) under Arabic. Sizes, weights, and
+   * tracking are unchanged — only the leading moves.
+   */
+  [lang="ar"] .text-display-large { line-height: 74px; }
+  [lang="ar"] .text-display-medium { line-height: 60px; }
+  [lang="ar"] .text-display-small { line-height: 51px; }
+  [lang="ar"] .text-headline-large { line-height: 46px; }
+  [lang="ar"] .text-headline-medium { line-height: 41px; }
+  [lang="ar"] .text-headline-small { line-height: 37px; }
+  [lang="ar"] .text-title-large { line-height: 32px; }
+  [lang="ar"] .text-title-medium { line-height: 28px; }
+  [lang="ar"] .text-title-small { line-height: 23px; }
+  [lang="ar"] .text-body-large { line-height: 28px; }
+  [lang="ar"] .text-body-medium { line-height: 23px; }
+  [lang="ar"] .text-body-small { line-height: 18px; }
+  [lang="ar"] .text-label-large { line-height: 23px; }
+  [lang="ar"] .text-label-medium { line-height: 18px; }
+  [lang="ar"] .text-label-small { line-height: 18px; }
+
+  /* M3 uses a visible focus indicator, never the UA default outline. */
+  :focus-visible {
+    outline: 3px solid rgb(var(--md-sys-color-primary));
+    outline-offset: 2px;
+  }
+
+  /*
+   * C-6: users who ask their OS for more contrast. outline-variant is a
+   * deliberately low-contrast divider role (1.6:1); under this query it is
+   * promoted to the full outline role, and the focus ring thickens.
+   */
+  @media (prefers-contrast: more) {
+    :root,
+    .dark {
+      --md-sys-color-outline-variant: var(--md-sys-color-outline);
+    }
+
+    :focus-visible {
+      outline-width: 4px;
+    }
+  }
+
+  ::selection {
+    background: rgb(var(--md-sys-color-primary-container));
+    color: rgb(var(--md-sys-color-on-primary-container));
+  }
+}
+
+@layer components {
+  /*
+   * M3 state layer. A translucent wash of the *content* colour over the
+   * container, at a spec-defined opacity per interaction state. Every
+   * interactive component composes this rather than re-deriving hover colours.
+   *
+   * The layer sits at z-0 inside an isolated stacking context; component content
+   * is lifted to z-10 so the wash paints under the label, not over it.
+   */
+  .state-layer {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .state-layer::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    background-color: currentColor;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--md-sys-duration-short2) var(--md-sys-easing-standard);
+  }
+
+  .state-layer:hover::before {
+    opacity: var(--md-sys-state-hover);
+  }
+
+  .state-layer:focus-visible::before {
+    opacity: var(--md-sys-state-focus);
+  }
+
+  .state-layer:active::before {
+    opacity: var(--md-sys-state-pressed);
+  }
+
+  /* A disabled control has no interaction states at all. */
+  .state-layer:disabled::before,
+  .state-layer[aria-disabled="true"]::before {
+    opacity: 0;
+  }
+
+  /* Content sits above the state layer. */
+  .state-layer > * {
+    position: relative;
+    z-index: 10;
+  }
+
+  /*
+   * Expands the hit area to 48x48 without changing the visual size, for the
+   * 40dp icon buttons and checkboxes. M3 requires a 48dp minimum touch target
+   * even where the drawn control is smaller.
+   */
+  .touch-target::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 48px;
+    height: 48px;
+    transform: translate(-50%, -50%);
+  }
+
+  /*
+   * M3 disabled treatment: content at 38%, container at 12%. Applied as one
+   * class so no call site invents its own disabled styling.
+   */
+  .md-disabled {
+    @apply pointer-events-none;
+    opacity: var(--md-sys-state-disabled-content);
+  }
+}
+
+@layer utilities {
+  /* Drives the indeterminate LinearProgress bar. */
+  @keyframes md-indeterminate {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(300%); }
+  }
+
+  /* Respect a reduced-motion preference across every M3 transition. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

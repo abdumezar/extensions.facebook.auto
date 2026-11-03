@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Nashir — ناشِر</title>
+
+    <!--
+      Fonts are bundled (src/assets/fonts) and imported from main.tsx. This page
+      deliberately loads nothing from a remote origin: an MV3 extension page that
+      fetches a webfont from a CDN leaks a request per open and breaks offline.
+    -->
+
+    <!--
+      Pre-paint theme, from public/theme-preload.js.
+
+      Deliberately NOT inlined: MV3 extension pages run under `script-src 'self'`, which
+      blocks every inline script — so an inline copy is not a style preference, it simply
+      does not execute. A classic external script still runs before first paint, so the
+      no-flash guarantee is unchanged.
+    -->
+    <script src="/theme-preload.js"></script>
+
+    <!--
+      Ground colour for the gap between first paint and the stylesheet landing.
+      These are --md-sys-color-surface from tokens.css; the same test keeps them in sync.
+    -->
+    <style>
+      html { background: #f5fbf6; }
+      html.dark { background: #0f1512; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./main.tsx"></script>
+  </body>
+</html>

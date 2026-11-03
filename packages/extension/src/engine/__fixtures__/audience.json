@@ -1,0 +1,263 @@
+{
+ "reactorsPage": {
+  "data": {
+   "node": {
+    "__typename": "Feedback",
+    "reactors": {
+     "edges": [
+      {
+       "feedback_reaction_info": {
+        "id": "1635855486666999",
+        "face_image": {
+         "uri": "https://cdn.example/react.png"
+        }
+       },
+       "node": {
+        "id": "10000000000002",
+        "__typename": "User",
+        "name": "Layla Q 1",
+        "profile_url": "https://www.facebook.com/10000000000003",
+        "url": "https://www.facebook.com/10000000000003",
+        "profile_picture": {
+         "uri": "https://cdn.example/img.jpg",
+         "width": 40,
+         "height": 40,
+         "scale": 1
+        }
+       },
+       "cursor": "cursor-r1"
+      },
+      {
+       "feedback_reaction_info": {
+        "id": "1678524932434102",
+        "face_image": {
+         "uri": "https://cdn.example/react.png"
+        }
+       },
+       "node": {
+        "id": "10000000000004",
+        "__typename": "User",
+        "name": "Omar T 2",
+        "profile_url": "https://www.facebook.com/10000000000005",
+        "url": "https://www.facebook.com/10000000000005",
+        "profile_picture": {
+         "uri": "https://cdn.example/img.jpg",
+         "width": 40,
+         "height": 40,
+         "scale": 1
+        }
+       },
+       "cursor": "cursor-r2"
+      },
+      {
+       "feedback_reaction_info": {
+        "id": "613557422527858",
+        "face_image": {
+         "uri": "https://cdn.example/react.png"
+        }
+       },
+       "node": {
+        "id": "10000000000007",
+        "__typename": "User",
+        "name": "Sara M 3",
+        "profile_url": "https://www.facebook.com/10000000000008",
+        "url": "https://www.facebook.com/10000000000008",
+        "profile_picture": {
+         "uri": "https://cdn.example/img.jpg",
+         "width": 40,
+         "height": 40,
+         "scale": 1
+        }
+       },
+       "cursor": "cursor-r3"
+      }
+     ],
+     "page_info": {
+      "has_next_page": true,
+      "end_cursor": "cursor-r-end"
+     }
+    }
+   }
+  }
+ },
+ "commentsFirstPage": {
+  "data": {
+   "node": {
+    "__typename": "Feedback",
+    "id": "ZmVlZGJhY2s6MTUzMDAwMDAwMDAwMDAwMQ==",
+    "comment_rendering_instance_for_feed_location": {
+     "selected_intent": {
+      "intent_token": "X"
+     },
+     "comments": {
+      "total_count": 30,
+      "count": 27,
+      "edges": [
+       {
+        "node": {
+         "id": "Y29tbWVudDoxNTMwMDAwMDAwMDAwMDAxXzE1MzAwMDAwMDAwMDAxMDE=",
+         "legacy_fbid": "1530000000000101",
+         "depth": 0,
+         "body": {
+          "text": "مهتم، رقمي 0501234567"
+         },
+         "author": {
+          "__typename": "User",
+          "id": "10000000000027",
+          "name": "Omar T 12",
+          "profile_picture_depth_0": {
+           "uri": "https://cdn.example/img.jpg"
+          },
+          "url": "https://www.facebook.com/10000000000028"
+         },
+         "created_time": 1787687123,
+         "comment_direct_parent": null,
+         "__typename": "Comment"
+        },
+        "cursor": null
+       },
+       {
+        "node": {
+         "id": "Y29tbWVudDoxNTMwMDAwMDAwMDAwMDAxXzE1MzAwMDAwMDAwMDAxMDI=",
+         "legacy_fbid": "1530000000000102",
+         "depth": 0,
+         "body": {
+          "text": "+971 50 123 4567"
+         },
+         "author": {
+          "__typename": "User",
+          "id": "10000000000035",
+          "name": "Sara M 13",
+          "profile_picture_depth_0": {
+           "uri": "https://cdn.example/img.jpg"
+          },
+          "url": "https://www.facebook.com/10000000000036"
+         },
+         "created_time": 1787781395,
+         "comment_direct_parent": null,
+         "__typename": "Comment"
+        },
+        "cursor": null
+       },
+       {
+        "node": {
+         "id": "Y29tbWVudDoxNTMwMDAwMDAwMDAwMDAxXzE1MzAwMDAwMDAwMDAxMDM=",
+         "legacy_fbid": "1530000000000103",
+         "depth": 0,
+         "body": {
+          "text": "كم السعر؟"
+         },
+         "author": {
+          "__typename": "User",
+          "id": "10000000000038",
+          "name": "Yusuf K 14",
+          "profile_picture_depth_0": {
+           "uri": "https://cdn.example/img.jpg"
+          },
+          "url": "https://www.facebook.com/10000000000039"
+         },
+         "created_time": 1787765008,
+         "comment_direct_parent": null,
+         "__typename": "Comment"
+        },
+        "cursor": null
+       }
+      ],
+      "page_info": {
+       "has_next_page": true,
+       "end_cursor": "cursor-c1-end"
+      }
+     }
+    }
+   }
+  }
+ },
+ "commentsNextPage": {
+  "data": {
+   "node": {
+    "__typename": "Feedback",
+    "comment_rendering_instance": {
+     "comments": {
+      "total_count": null,
+      "count": null,
+      "edges": [
+       {
+        "node": {
+         "id": "Y29tbWVudDoxNTMwMDAwMDAwMDAwMDAxXzE1MzAwMDAwMDAwMDAxMDQ=",
+         "legacy_fbid": "1530000000000104",
+         "depth": 0,
+         "body": {
+          "text": "تمام"
+         },
+         "author": {
+          "__typename": "User",
+          "id": "10000000000069",
+          "name": "Omar T 22",
+          "profile_picture_depth_0": {
+           "uri": "https://cdn.example/img.jpg"
+          },
+          "url": "https://www.facebook.com/10000000000070"
+         },
+         "created_time": 1787673906,
+         "comment_direct_parent": null,
+         "__typename": "Comment"
+        },
+        "cursor": null
+       },
+       {
+        "node": {
+         "id": "Y29tbWVudDoxNTMwMDAwMDAwMDAwMDAxXzE1MzAwMDAwMDAwMDAxMDU=",
+         "legacy_fbid": "1530000000000105",
+         "depth": 0,
+         "body": {
+          "text": "متاح؟"
+         },
+         "author": {
+          "__typename": "User",
+          "id": "10000000000072",
+          "name": "Sara M 23",
+          "profile_picture_depth_0": {
+           "uri": "https://cdn.example/img.jpg"
+          },
+          "url": "https://www.facebook.com/10000000000073"
+         },
+         "created_time": 1787678871,
+         "comment_direct_parent": null,
+         "__typename": "Comment"
+        },
+        "cursor": null
+       },
+       {
+        "node": {
+         "id": "Y29tbWVudDoxNTMwMDAwMDAwMDAwMDAxXzE1MzAwMDAwMDAwMDAxMDY=",
+         "legacy_fbid": "1530000000000106",
+         "depth": 0,
+         "body": {
+          "text": "https://wa.me/966551112222"
+         },
+         "author": {
+          "__typename": "User",
+          "id": "10000000000075",
+          "name": "Yusuf K 24",
+          "profile_picture_depth_0": {
+           "uri": "https://cdn.example/img.jpg"
+          },
+          "url": "https://www.facebook.com/10000000000076"
+         },
+         "created_time": 1787670261,
+         "comment_direct_parent": null,
+         "__typename": "Comment"
+        },
+        "cursor": null
+       }
+      ],
+      "page_info": {
+       "has_next_page": true,
+       "end_cursor": "cursor-c2-end"
+      }
+     }
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,128 @@
+import { CURRENT_SESSION } from "@nashir/shared";
+import { installDnrRules } from "./dnrManager.js";
+import { handleUiRequest, openOrFocusDashboard } from "./messageRouter.js";
+import { container } from "./container.js";
+import { ALARM_TICK } from "../engine/CampaignEngine.js";
+import { ALARM_RAMP } from "../engine/FeasibilityRunner.js";
+import { ALARM_ENGAGEMENT } from "../engine/EngagementService.js";
+import { ALARM_RADAR } from "../engine/LeadRadarService.js";
+import { ALARM_GROUPS_RESUME } from "../engine/GroupSyncService.js";
+import { measuredDefaults } from "../engine/feasibilityMath.js";
+
+/**
+ * Service worker entry point. Wires lifecycle, the alarm-driven campaign loop, and the
+ * typed message router. Everything durable lives in persisted RunState, so the SW can
+ * be evicted between ticks without losing a run.
+ */
+
+async function bootstrap(): Promise<void> {
+  await installDnrRules();
+  // If a run was mid-flight when the SW was evicted, make sure its alarm exists.
+  const state = await container().engine.getState();
+  // A cooled-down run is deliberately NOT re-armed. Facebook asked us to stop, and
+  // walking back in unattended the moment a timer expires is how a short throttle
+  // becomes a restricted account — the operator resumes it.
+  if (state && (state.status === "running" || state.status === "safety_break")) {
+    await chrome.alarms.create(ALARM_TICK, { when: Math.max(state.nextWakeAt, Date.now() + 1000) });
+  }
+  // Same for a rate ramp: it posts for real, so a lost alarm must not leave it half-run.
+  const record = await container().feasibility.get();
+  if (record.ramp?.status === "running") {
+    await chrome.alarms.create(ALARM_RAMP, {
+      when: Math.max(record.ramp.nextWakeAt ?? 0, Date.now() + 1000),
+    });
+  }
+  // Budget limits come from the bundled recipe, narrowed again by whatever the rate
+  // ramp measured on this install.
+  container().governor.applyBudget((await container().getRecipe()).callBudget);
+  container().governor.applyMeasured(measuredCeiling(record));
+
+  await container().groupSync.syncIfStale();
+  // If Facebook happens to be open at startup, take the free read of who is logged in.
+  void container().session.refreshProfileIfPossible();
+}
+
+/**
+ * The safe call rate the rate ramp established, if it ever ran to a conclusion.
+ * `ceilingPostsPerHour` is the last tier that held; `measuredDefaults` derates it.
+ */
+function measuredCeiling(record: { ramp?: { ceilingPostsPerHour?: number } }) {
+  const ceiling = record.ramp?.ceilingPostsPerHour;
+  return ceiling ? measuredDefaults(ceiling) : null;
+}
+
+chrome.runtime.onInstalled.addListener(() => void bootstrap());
+chrome.runtime.onStartup.addListener(() => void bootstrap());
+
+/**
+ * The moment a Facebook page finishes loading, session tokens are free to obtain — no
+ * tab to open, no cookie swap, nothing for the user to notice. That is the cheapest
+ * possible time to refresh the group cache, so we take it (throttled inside GroupSync).
+ */
+chrome.tabs.onUpdated.addListener((_tabId, info, tab) => {
+  if (info.status !== "complete" || !tab.url?.includes("facebook.com")) return;
+  void container().groupSync.syncIfStale();
+  // The same free moment is when the viewer's name and avatar are readable. Scraping
+  // them here is a message to a content script on a page that is already open: no tab
+  // opened, no Facebook request, nothing spent from the call budget. It is what makes
+  // the dashboard know who you are before you have opened Facebook in this session.
+  void container().session.refreshProfileIfPossible();
+});
+
+// Popup / dashboard open request → single-instance dashboard tab.
+chrome.action.onClicked.addListener(() => void openOrFocusDashboard());
+
+// Typed RPC from dashboard/popup.
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  // Ignore content-script responses (they have their own shape) and cross-extension msgs.
+  if (sender.id !== chrome.runtime.id) return false;
+  if (msg?.type === "OPEN_DASHBOARD") {
+    void openOrFocusDashboard();
+    sendResponse({ ok: true });
+    return false;
+  }
+  handleUiRequest(msg).then(sendResponse);
+  return true; // async response
+});
+
+// The campaign loop heartbeat, plus the rate-ramp's own separate beat.
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === ALARM_RAMP) {
+    void container().feasibility.rampTick();
+    return;
+  }
+  if (alarm.name === ALARM_RADAR) {
+    void (async () => {
+      const c = container();
+      const tokens = await c.scraper.scrapeFromOpenTab();
+      const groups = await c.groups.getGroups(CURRENT_SESSION);
+      await c.radar.tick(tokens, await c.getRecipe(), new Map(groups.map((g) => [g.id, g])));
+    })();
+    return;
+  }
+  if (alarm.name === ALARM_GROUPS_RESUME) {
+    // Same rules as any background sync: an open logged-in tab or nothing.
+    void container().groupSync.syncIfStale();
+    return;
+  }
+  if (alarm.name === ALARM_ENGAGEMENT) {
+    // Tokens from a tab the user already has open, never one we open. This is
+    // unattended background work: a tab appearing on its own is the opposite of that.
+    void container().engagement.tick(
+      () => container().scraper.scrapeFromOpenTab(),
+      () => container().getRecipe(),
+    );
+    return;
+  }
+  if (alarm.name !== ALARM_TICK) return;
+  void (async () => {
+    const engine = container().engine;
+    const state = await engine.getState();
+    // A safety-break wake flips the run back to running before ticking.
+    if (state?.status === "safety_break" && Date.now() >= state.nextWakeAt) {
+      state.status = "running";
+      await container().storage.set("nashir:run", state);
+    }
+    await engine.tick();
+  })();
+});

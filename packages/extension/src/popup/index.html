@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Nashir</title>
+
+    <!-- Bundled fonts + M3 tokens are imported from main.ts. No remote origins. -->
+
+    <!--
+      Pre-paint theme, from public/theme-preload.js.
+
+      Deliberately NOT inlined: MV3 extension pages run under `script-src 'self'`, which
+      blocks every inline script — so an inline copy is not a style preference, it simply
+      does not execute. A classic external script still runs before first paint, so the
+      no-flash guarantee is unchanged.
+    -->
+    <script src="/theme-preload.js"></script>
+
+    <style>
+      /* Ground colour before the stylesheet lands — --md-sys-color-surface. */
+      html { background: #f5fbf6; }
+      html.dark { background: #0f1512; }
+
+      body {
+        margin: 0;
+        width: 256px;
+        font-family: Roboto, "IBM Plex Sans Arabic", system-ui, sans-serif;
+        background: rgb(var(--md-sys-color-surface));
+        color: rgb(var(--md-sys-color-on-surface));
+      }
+
+      .wrap {
+        padding: 20px 16px 16px;
+        text-align: center;
+      }
+
+      .logo {
+        width: 96px;
+        height: 96px;
+        object-fit: contain;
+        margin: 0 auto 8px;
+        display: block;
+      }
+
+      .tag {
+        /* M3 body-small */
+        font-size: 12px;
+        line-height: 16px;
+        letter-spacing: 0.4px;
+        color: rgb(var(--md-sys-color-on-surface-variant));
+      }
+
+      /* M3 filled button: 40dp tall, full shape, label-large. */
+      .md-filled-button {
+        position: relative;
+        isolation: isolate;
+        overflow: hidden;
+        margin-top: 20px;
+        width: 100%;
+        height: 40px;
+        padding: 0 24px;
+        border: 0;
+        border-radius: var(--md-sys-shape-full, 9999px);
+        background: rgb(var(--md-sys-color-primary));
+        color: rgb(var(--md-sys-color-on-primary));
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 20px;
+        letter-spacing: 0.1px;
+        cursor: pointer;
+        transition: box-shadow var(--md-sys-duration-short2, 100ms)
+          var(--md-sys-easing-standard, cubic-bezier(0.2, 0, 0, 1));
+      }
+
+      /* State layer: a wash of the content colour, at the spec's opacities. */
+      .md-filled-button::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background-color: currentColor;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity var(--md-sys-duration-short2, 100ms)
+          var(--md-sys-easing-standard, cubic-bezier(0.2, 0, 0, 1));
+      }
+
+      .md-filled-button:hover::before { opacity: var(--md-sys-state-hover, 0.08); }
+      .md-filled-button:focus-visible::before { opacity: var(--md-sys-state-focus, 0.1); }
+      .md-filled-button:active::before { opacity: var(--md-sys-state-pressed, 0.1); }
+
+      .md-filled-button:hover { box-shadow: var(--md-sys-elevation-1); }
+
+      .md-filled-button:focus-visible {
+        outline: 3px solid rgb(var(--md-sys-color-primary));
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <img id="logo" class="logo" src="../assets/logos/logo-ar.png" alt="ناشِر · Nashir" />
+      <div class="tag">Facebook Group Auto Poster</div>
+      <button id="open" class="md-filled-button">افتح لوحة التحكم</button>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
