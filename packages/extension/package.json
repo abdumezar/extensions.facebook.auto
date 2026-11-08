@@ -18,7 +18,7 @@
     "@nashir/shared": "workspace:*",
     "@noble/ed25519": "3.2.0",
     "fflate": "0.8.3",
-    "i18next": "^24.2.1",
+    "i18next": "^26.5.11",
     "idb": "^8.0.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
