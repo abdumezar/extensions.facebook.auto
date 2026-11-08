@@ -37,8 +37,9 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
       aria-label={label}
       title={label}
       className={cn(
-        // 40dp drawn, 48dp hit area (.touch-target) — M3 accessibility minimum.
-        "state-layer touch-target relative grid h-10 w-10 shrink-0 place-items-center rounded-full",
+        // 40dp drawn, 48dp hit area (.touch-target) — M3 accessibility minimum. `size-10`, not
+        // `h-10 w-10`: Tailwind emits it before any `h-*`/`w-*`, so a caller can shrink the button.
+        "state-layer touch-target relative grid size-10 shrink-0 place-items-center rounded-full",
         disabled ? cn(DISABLED[variant], "pointer-events-none") : ENABLED[variant],
         className,
       )}

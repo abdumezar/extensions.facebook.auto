@@ -1,6 +1,18 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/*
+ * Class names are read from the `content` globs in tailwind.config.ts only (`source(none)`
+ * turns off the automatic scan of the whole package), so a stray word in a token file or a
+ * comment cannot become a utility.
+ */
+@import "tailwindcss" source(none);
+@config "../../tailwind.config.ts";
+
+/*
+ * Direction follows the `dir` attribute alone, as it did before Tailwind 4, whose own
+ * rtl:/ltr: variants also read `:lang()`. The dashboard sets both on <html> together, but
+ * an element given `dir="ltr"` inside Arabic text (an id, a number) must still count as LTR.
+ */
+@custom-variant rtl (&:where([dir="rtl"], [dir="rtl"] *));
+@custom-variant ltr (&:where([dir="ltr"], [dir="ltr"] *));
 
 /*
  * Token layer and fonts are imported ahead of this file from main.tsx (and from
@@ -9,6 +21,40 @@
  */
 
 @layer base {
+  /*
+   * Tailwind 4 changed three preflight defaults that this UI was drawn against.
+   * Restored here so nothing shifts: borders without a colour class take the old
+   * grey instead of currentColor, enabled buttons show the pointer, and a
+   * placeholder is the old grey rather than a half-transparent copy of the text.
+   */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: #e5e7eb;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-gray-400);
+  }
+
+  /*
+   * v4's reset zeroes the padding of every element; v3 left the browser's 1px on table
+   * cells, which a `py-*`/`pe-*` utility only partly overrides, so the start edge of
+   * each cell keeps it.
+   */
+  td,
+  th {
+    padding: 1px;
+  }
+
   html,
   body,
   #root {
@@ -60,28 +106,6 @@
     @apply bg-surface text-on-surface font-sans text-body-medium antialiased;
   }
 
-  /*
-   * M3 line-heights are tuned for Roboto's Latin metrics. IBM Plex Sans Arabic
-   * sits taller and its diacritics clip at those values, so every role gets
-   * 1.15x leading (rounded to whole pixels) under Arabic. Sizes, weights, and
-   * tracking are unchanged — only the leading moves.
-   */
-  [lang="ar"] .text-display-large { line-height: 74px; }
-  [lang="ar"] .text-display-medium { line-height: 60px; }
-  [lang="ar"] .text-display-small { line-height: 51px; }
-  [lang="ar"] .text-headline-large { line-height: 46px; }
-  [lang="ar"] .text-headline-medium { line-height: 41px; }
-  [lang="ar"] .text-headline-small { line-height: 37px; }
-  [lang="ar"] .text-title-large { line-height: 32px; }
-  [lang="ar"] .text-title-medium { line-height: 28px; }
-  [lang="ar"] .text-title-small { line-height: 23px; }
-  [lang="ar"] .text-body-large { line-height: 28px; }
-  [lang="ar"] .text-body-medium { line-height: 23px; }
-  [lang="ar"] .text-body-small { line-height: 18px; }
-  [lang="ar"] .text-label-large { line-height: 23px; }
-  [lang="ar"] .text-label-medium { line-height: 18px; }
-  [lang="ar"] .text-label-small { line-height: 18px; }
-
   /* M3 uses a visible focus indicator, never the UA default outline. */
   :focus-visible {
     outline: 3px solid rgb(var(--md-sys-color-primary));
@@ -109,6 +133,48 @@
     color: rgb(var(--md-sys-color-on-primary-container));
   }
 }
+
+/*
+ * M3 line-heights are tuned for Roboto's Latin metrics. IBM Plex Sans Arabic
+ * sits taller and its diacritics clip at those values, so every role gets
+ * 1.15x leading (rounded to whole pixels) under Arabic. Sizes, weights, and
+ * tracking are unchanged — only the leading moves.
+ *
+ * The body rule restates what `@apply text-body-medium` on <body> produced before
+ * Tailwind 4 (it copied the Arabic override onto <body>): every element that has no
+ * leading of its own, buttons and inputs included, inherits it.
+ *
+ * Deliberately outside every @layer: unlayered rules beat layered ones whatever
+ * their specificity, so these still win over the `text-<role>` utilities, which
+ * Tailwind emits inside `@layer utilities`.
+ */
+[lang="ar"] body { line-height: 23px; }
+[lang="ar"] .text-display-large { line-height: 74px; }
+[lang="ar"] .text-display-medium { line-height: 60px; }
+[lang="ar"] .text-display-small { line-height: 51px; }
+[lang="ar"] .text-headline-large { line-height: 46px; }
+[lang="ar"] .text-headline-medium { line-height: 41px; }
+[lang="ar"] .text-headline-small { line-height: 37px; }
+[lang="ar"] .text-title-large { line-height: 32px; }
+[lang="ar"] .text-title-medium { line-height: 28px; }
+[lang="ar"] .text-title-small { line-height: 23px; }
+[lang="ar"] .text-body-large { line-height: 28px; }
+[lang="ar"] .text-body-medium { line-height: 23px; }
+[lang="ar"] .text-body-small { line-height: 18px; }
+[lang="ar"] .text-label-large { line-height: 23px; }
+[lang="ar"] .text-label-medium { line-height: 18px; }
+[lang="ar"] .text-label-small { line-height: 18px; }
+
+/*
+ * The same override for a role that is only applied behind a variant (a utility's variant
+ * is a different class name, so the rules above never reach it). One line per use:
+ * Sidebar (lg:), TextField's floating label (peer-*).
+ */
+@media (min-width: 1024px) {
+  [lang="ar"] .lg\:text-label-large { line-height: 23px; }
+}
+[lang="ar"] .peer:placeholder-shown ~ .peer-placeholder-shown\:text-body-large { line-height: 28px; }
+[lang="ar"] .peer:focus ~ .peer-focus\:text-body-small { line-height: 18px; }
 
 @layer components {
   /*

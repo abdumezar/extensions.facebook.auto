@@ -31,6 +31,9 @@ export default defineConfig(({ mode, command }) => ({
   ],
   build: {
     target: "es2022",
+    // The manifest's minimum_chrome_version, so CSS the browser can already read is not
+    // down-levelled (Tailwind 4 emits native @layer, @property and color-mix()).
+    cssTarget: "chrome116",
     // Maps are for debugging; a release should not ship them (they double its size and
     // expose the source layout to any page that can fetch a web-accessible file).
     sourcemap: mode === "e2e",
