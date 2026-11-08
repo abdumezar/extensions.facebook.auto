@@ -12,7 +12,7 @@ By taking part you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Setup
 
-You need Node.js 22 or newer and pnpm 10.
+You need Node.js 22.12 or newer and pnpm 10.
 
 ```bash
 pnpm install

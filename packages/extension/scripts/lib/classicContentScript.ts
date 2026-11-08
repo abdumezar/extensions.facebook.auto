@@ -50,7 +50,7 @@ export function classicContentScript(options: {
           target: "es2022",
           copyPublicDir: false,
           lib: { entry: resolve(options.root, options.entry), formats: ["iife"], name: "nashirContent", fileName: () => CONTENT_SCRIPT_FILE },
-          rollupOptions: { output: { inlineDynamicImports: true } },
+          rollupOptions: { output: { codeSplitting: false, strict: true } },
         },
       });
 

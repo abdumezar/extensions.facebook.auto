@@ -4,5 +4,5 @@
     "types": ["node"],
     "noEmit": true
   },
-  "include": ["scripts", "vitest.workspace.ts", "vite.config.ts", "tailwind.config.ts"]
+  "include": ["scripts", "vitest.config.ts", "vite.config.ts", "tailwind.config.ts"]
 }

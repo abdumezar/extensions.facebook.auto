@@ -57,4 +57,25 @@ describe("classicContentScript plugin", () => {
     expect(source).not.toMatch(/\bimport\s*\(/);
     expect(source).not.toMatch(/^\s*(import|export)\s/m);
   });
+
+  it("wraps the one chunk in the nashirContent IIFE, with no preload helper", async () => {
+    const p = plugin(
+      "export const api = 'API_MARKER';\nexport const later = () => import('./later');\nchrome.runtime.sendMessage(api);",
+      { "later.ts": "export const x = 'LATER_MARKER';" },
+    );
+    const emitted: { fileName: string; source: string }[] = [];
+    await (p.generateBundle as unknown as (this: unknown) => Promise<void>).call({
+      emitFile: (file: { fileName: string; source: string }) => emitted.push(file),
+    });
+
+    // The plugin throws when the build yields more than one chunk, so one file out means one chunk.
+    expect(emitted).toHaveLength(1);
+    const source = emitted[0]!.source;
+    // Modules are strict; as a classic script the code only stays so with its own directive.
+    expect(source).toMatch(/^"use strict";\s*var nashirContent\s*=\s*\(function\s*\(/);
+    expect(source).toContain("LATER_MARKER");
+    expect(source).not.toContain("__vitePreload");
+    expect(source).not.toMatch(/\bimport\s*\(/);
+    expect(source).not.toMatch(/^\s*(import|export)\s/m);
+  });
 });
