@@ -12,6 +12,13 @@ function Boom({ explode }: { explode: boolean }): JSX.Element {
 beforeEach(() => vi.spyOn(console, "error").mockImplementation(() => {}));
 afterEach(() => vi.restoreAllMocks());
 
+// React rethrows a render error inside a fake DOM event, and jsdom prints any such error that no
+// `error` listener cancels. Vitest 4 forwards that print to the console it held before the spy
+// above existed, so the spy no longer catches it; cancelling the event does.
+const cancelWindowError = (event: ErrorEvent) => event.preventDefault();
+beforeEach(() => window.addEventListener("error", cancelWindowError));
+afterEach(() => window.removeEventListener("error", cancelWindowError));
+
 describe("ErrorBoundary", () => {
   it("renders children when nothing throws", () => {
     render(

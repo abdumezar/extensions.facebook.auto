@@ -46,8 +46,4 @@ export default defineConfig(({ mode, command }) => ({
     strictPort: true,
     hmr: { port: 5199 },
   },
-  test: {
-    environment: "node",
-    include: ["src/**/*.test.ts"],
-  },
 }));

@@ -86,6 +86,13 @@ describe("the built extension", () => {
     expect(source).not.toMatch(/\bimport\b\s*[{*"'\w]/);
     expect(source).not.toMatch(/import\.meta/);
     expect(source).not.toContain("chrome.runtime.getURL(");
+    expect(source).not.toContain("__vitePreload");
+  });
+
+  it("wraps the content script in one self-invoking function, with nothing exported", () => {
+    const source = read(manifest.content_scripts[0]!.js[0]!).trim();
+    expect(source).toMatch(/^"use strict";\s*\(function\s*\(\s*\)\s*\{[\s\S]*\}\)\(\);?$/);
+    expect(source).not.toMatch(/\bexports\b/);
   });
 
   it("still answers the typed requests from the service worker", () => {

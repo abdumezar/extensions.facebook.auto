@@ -1,5 +1,5 @@
 import { defineManifest } from "@crxjs/vite-plugin";
-import pkg from "./package.json";
+import pkg from "./package.json" with { type: "json" };
 import { e2eManifest } from "./scripts/lib/e2eBuild.js";
 import { EXTENSION_KEY } from "./src/update/extensionKey.js";
 
